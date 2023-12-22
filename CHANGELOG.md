@@ -1,5 +1,10 @@
 # Changelog
 
+### [v0.6.2]
+
+#### Added
+- Added support for `autoReconnect` on connect method.
+
 ### [v0.6.1]
 
 #### Added

@@ -16,7 +16,7 @@ To use EventFlux in your Dart project, add it to your dependencies:
 
 ```yaml
 dependencies:
-  eventflux: ^0.6.1
+  eventflux: ^0.6.2
 ```
 
 ## Usage
@@ -33,6 +33,7 @@ void main() {
   EventFluxResponse response = eventFlux.connect(
     EventFluxConnectionType.get, 
     'https://example.com/events',
+    autoReconnect: true
     onError:(e){
          // Log the error to Sentry or do something.
     }
