@@ -27,7 +27,7 @@ Here's a quick example to get you started:
 import 'package:eventflux/eventflux.dart';
 
 void main() {
-  var eventFlux = EventFlux.instance;
+  EventFlux eventFlux = EventFlux.instance;
 
   // Connect to an event stream
   EventFluxResponse response = eventFlux.connect(
