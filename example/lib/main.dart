@@ -20,18 +20,22 @@ class MainApp extends StatelessWidget {
             children: [
               TextButton(
                   onPressed: () {
-                    String url = 'https://example.com/events';
+                    String url =
+                        'https://api-dev.magnifi.com/realtime-portfolio/updates?authtoken=eyJraWQiOiJXRklUWnJIcmwzWGpEZXotVmc4TTRvSXNEUE1YN0ppbUtiN3JacVFyWEtjIiwiYWxnIjoiUlMyNTYifQ.eyJ2ZXIiOjEsImp0aSI6IkFULl96UUxFS3NJR0NGMDFVNC1HRDNQZEVwNTBMQ1V2aWUzdkRKUkZpN19ub1Uub2FyMTZkaXJzcUVzWlIza2w2OTciLCJpc3MiOiJodHRwczovL2Rldi5hdXRoLm1hZ25pZmkuY29tL29hdXRoMi9kZWZhdWx0IiwiYXVkIjoiYXBpOi8vZGVmYXVsdCIsImlhdCI6MTcwMzIzMDc3NywiZXhwIjoxNzAzMzE3MTc3LCJjaWQiOiIwb2ExazR1eXYwNnR3bkFXODY5NyIsInVpZCI6IjAwdTFrNWJ5MGh4R1ZrcGZMNjk3Iiwic2NwIjpbIm9mZmxpbmVfYWNjZXNzIiwiZW1haWwiLCJwcm9maWxlIiwib3BlbmlkIl0sImF1dGhfdGltZSI6MTcwMzIzMDc3Nywic3ViIjoib29kMTBAYXBleC5jb20ifQ.jO5r6UtloA8wlZNODjNJ8KHB8RtkXyRUqMBe7nS1EPX7ihlPKPUtLJhlN-KJkXY3BUd3CYcoO_eiYlKKyv_Apd0OqtXxtmmO9FUeiE7NMtxzOtZuisgQ06D0NgyqOMXkb8DIfiInIpLgFYkPUyBeQcfx6CZmbfaSR7lTie93O00eYbN0yiYn3_gVyuwI86Nwyq0ziB0g2unLcttvoTbwd217pu_Chit5nR7dTOPpuP5fhk9FhEy8oFFs8tURClaaI9Ci3zjqdQ7graT4DRRorJ10FqAKIqzGMY2m2dcZ6aQHFf8fnA4jwvRXWSZAN7X-tTzmlNIO3E_7ZAy1jofW1g';
                     try {
                       EventFluxResponse response = EventFlux.instance.connect(
                         EventFluxConnectionType.get,
                         url,
+                        onError: (error) {
+                          log('Error Message Logged from UI: ${error.message}');
+                        },
                         onConnectionClose: () {
                           log('Connection Closed');
                         },
                       );
                       if (response.status == EventFluxStatus.connected) {
                         response.stream?.listen((event) {
-                          log('Revieved Event');
+                          log('Recieved Event $event');
                         });
                       } else {
                         log('Error');

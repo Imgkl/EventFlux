@@ -27,6 +27,7 @@ class EventFlux extends EventFluxBase {
   /// [url] is the endpoint to connect to.
   /// [header] allows specifying HTTP headers. Defaults to accept text/event-stream.
   /// [onConnectionClose] is an optional callback executed when the connection is closed.
+  /// [onError] is an optional callback executed when an error occurs.
   /// [body] is an optional.
   ///
   /// Returns an instance of EventFluxResponse containing the connection status and stream of data.
@@ -34,14 +35,16 @@ class EventFlux extends EventFluxBase {
   EventFluxResponse connect(EventFluxConnectionType type, String url,
       {Map<String, String> header = const {'Accept': 'text/event-stream'},
       Function()? onConnectionClose,
+      Function(EventFluxException)? onError,
       Map<String, dynamic>? body}) {
     /// Initalise variables
     _client = Client();
 
     _streamController = StreamController<EventFluxData>.broadcast();
 
-    var lineRegex = RegExp(r'^([^:]*)(?::)?(?: )?(.*)?$');
-    var currentSSEModel = EventFluxData(data: '', id: '', event: '');
+    RegExp lineRegex = RegExp(r'^([^:]*)(?::)?(?: )?(.*)?$');
+    EventFluxData currentEventFluxData =
+        EventFluxData(data: '', id: '', event: '');
 
     Request request = Request(
       type == EventFluxConnectionType.get ? 'GET' : 'POST',
@@ -71,8 +74,9 @@ class EventFlux extends EventFluxBase {
                 if (dataLine.isEmpty) {
                   /// When the data line is empty, it indicates that the complete event set has been read.
                   /// The event is then added to the stream.
-                  _streamController!.add(currentSSEModel);
-                  currentSSEModel = EventFluxData(data: '', id: '', event: '');
+                  _streamController!.add(currentEventFluxData);
+                  currentEventFluxData =
+                      EventFluxData(data: '', id: '', event: '');
                   return;
                 }
 
@@ -93,14 +97,14 @@ class EventFlux extends EventFluxBase {
                 }
                 switch (field) {
                   case 'event':
-                    currentSSEModel.event = value;
+                    currentEventFluxData.event = value;
                     break;
                   case 'data':
-                    currentSSEModel.data =
-                        '${currentSSEModel.data ?? ''}$value\n';
+                    currentEventFluxData.data =
+                        '${currentEventFluxData.data ?? ''}$value\n';
                     break;
                   case 'id':
-                    currentSSEModel.id = value;
+                    currentEventFluxData.id = value;
                     break;
                   case 'retry':
                     break;
@@ -120,6 +124,11 @@ class EventFlux extends EventFluxBase {
                   eventFluxLog(
                       'Data Stream Listen Error: $error ', LogEvent.error);
 
+                  /// Executes the onError function if it is not null
+                  if (onError != null) {
+                    onError(EventFluxException(message: error));
+                  }
+
                   /// returns the error and the status
                   return EventFluxResponse(
                       status: EventFluxStatus.disconnected,
@@ -129,6 +138,9 @@ class EventFlux extends EventFluxBase {
             );
       }, onError: (error, s) {
         eventFluxLog('Stream Listen Error: $error', LogEvent.error);
+
+        /// Executes the onError function if it is not null
+        if (onError != null) onError(EventFluxException(message: error));
 
         /// returns the error and the status
         return EventFluxResponse(

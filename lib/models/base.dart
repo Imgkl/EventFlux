@@ -62,6 +62,7 @@ abstract class EventFluxBase {
   EventFluxResponse connect(EventFluxConnectionType type, String url,
       {Map<String, String> header = const {'Accept': 'text/event-stream'},
       Function()? onConnectionClose,
+      Function(EventFluxException)? onError,
       Map<String, dynamic>? body});
   EventFluxStatus disconnect();
   EventFluxResponse reconnect(EventFluxConnectionType type, String url);
