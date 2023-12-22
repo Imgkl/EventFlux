@@ -1,6 +1,6 @@
 name: eventflux
 description: "EventFlux: A Dart package for efficient handling of server-sent event streams with easy connectivity and data management."
-version: 0.0.1
+version: 0.5.0
 homepage: https://github.com/Imgkl/EventFlux
 
 environment:
