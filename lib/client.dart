@@ -35,6 +35,7 @@ class EventFlux extends EventFluxBase {
   EventFluxResponse connect(EventFluxConnectionType type, String url,
       {Map<String, String> header = const {'Accept': 'text/event-stream'},
       Function()? onConnectionClose,
+      bool autoReconnect = false,
       Function(EventFluxException)? onError,
       Map<String, dynamic>? body}) {
     /// Initalise variables
@@ -118,6 +119,17 @@ class EventFlux extends EventFluxBase {
                 if (onConnectionClose != null) onConnectionClose();
               },
               onError: (error, s) {
+                if (autoReconnect) {
+                  reconnect(
+                    type,
+                    url,
+                    header: header,
+                    body: body,
+                    autoReconnect: autoReconnect,
+                    onError: onError,
+                    onConnectionClose: onConnectionClose,
+                  );
+                }
                 if (error is! ClientException &&
                     (error as ClientException).message !=
                         'Connection closed while receiving data') {
@@ -137,6 +149,17 @@ class EventFlux extends EventFluxBase {
               },
             );
       }, onError: (error, s) {
+        if (autoReconnect) {
+          reconnect(
+            type,
+            url,
+            header: header,
+            body: body,
+            autoReconnect: autoReconnect,
+            onError: onError,
+            onConnectionClose: onConnectionClose,
+          );
+        }
         eventFluxLog('Stream Listen Error: $error', LogEvent.error);
 
         /// Executes the onError function if it is not null
@@ -151,6 +174,17 @@ class EventFlux extends EventFluxBase {
       return EventFluxResponse(
           status: EventFluxStatus.connected, stream: _streamController!.stream);
     } catch (error) {
+      if (autoReconnect) {
+        reconnect(
+          type,
+          url,
+          header: header,
+          body: body,
+          autoReconnect: autoReconnect,
+          onError: onError,
+          onConnectionClose: onConnectionClose,
+        );
+      }
       eventFluxLog('Client Initalise Error: $error', LogEvent.error);
 
       /// returns the error and the status
@@ -186,8 +220,18 @@ class EventFlux extends EventFluxBase {
   /// [type] and [url] specify the connection parameters.
   /// Returns the response from the new connection.
   @override
-  EventFluxResponse reconnect(EventFluxConnectionType type, String url) {
+  EventFluxResponse reconnect(EventFluxConnectionType type, String url,
+      {Map<String, String> header = const {'Accept': 'text/event-stream'},
+      Function()? onConnectionClose,
+      bool autoReconnect = false,
+      Function(EventFluxException)? onError,
+      Map<String, dynamic>? body}) {
     disconnect();
-    return connect(type, url);
+    return connect(type, url,
+        header: header,
+        onConnectionClose: onConnectionClose,
+        autoReconnect: autoReconnect,
+        onError: onError,
+        body: body);
   }
 }
