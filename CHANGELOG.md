@@ -1,6 +1,6 @@
 # Changelog
 
-### [v0.5.0]
+### [v0.6.0]
 
 #### Added
 - Core functionality for connecting to server-sent event streams.
