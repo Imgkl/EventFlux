@@ -1,4 +1,8 @@
+
 # Changelog
+
+### [v0.6.5]
+- Better Error handling and Retry logic
 
 ### [v0.6.2]
 

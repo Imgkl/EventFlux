@@ -16,7 +16,7 @@ To use EventFlux in your Dart project, add it to your dependencies:
 
 ```yaml
 dependencies:
-  eventflux: ^0.6.2+1
+  eventflux: ^0.6.5
 ```
 
 ## Usage
