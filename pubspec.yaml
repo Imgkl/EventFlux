@@ -1,6 +1,6 @@
 name: eventflux
 description: "EventFlux: A Dart package for efficient handling of server-sent event streams with easy connectivity and data management."
-version: 0.6.5
+version: 0.6.5+1
 homepage: https://gokula.dev
 repository: https://github.com/Imgkl/EventFlux
 
