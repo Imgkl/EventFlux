@@ -66,10 +66,4 @@ abstract class EventFluxBase {
       Function(EventFluxException)? onError,
       Map<String, dynamic>? body});
   Future<EventFluxStatus> disconnect();
-  void reconnect(EventFluxConnectionType type, String url,
-      {Map<String, String> header = const {'Accept': 'text/event-stream'},
-      Function()? onConnectionClose,
-      bool autoReconnect = false,
-      Function(EventFluxException)? onError,
-      Map<String, dynamic>? body});
 }

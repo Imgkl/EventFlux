@@ -40,47 +40,49 @@ class EventFlux extends EventFluxBase {
       bool autoReconnect = false,
       Function(EventFluxException)? onError,
       Map<String, dynamic>? body}) {
-    /// Initalise variables
-    _client = Client();
+    bool shouldRetry = true;
+    while (shouldRetry) {
+      /// Initalise variables
+      _client = Client();
 
-    _streamController = StreamController<EventFluxData>();
+      _streamController = StreamController<EventFluxData>();
+      shouldRetry = autoReconnect;
+      RegExp lineRegex = RegExp(r'^([^:]*)(?::)?(?: )?(.*)?$');
+      EventFluxData currentEventFluxData =
+          EventFluxData(data: '', id: '', event: '');
 
-    RegExp lineRegex = RegExp(r'^([^:]*)(?::)?(?: )?(.*)?$');
-    EventFluxData currentEventFluxData =
-        EventFluxData(data: '', id: '', event: '');
+      Request request = Request(
+        type == EventFluxConnectionType.get ? 'GET' : 'POST',
+        Uri.parse(url),
+      );
+      if (header.isNotEmpty) {
+        request.headers.addAll(header);
+      }
+      if (body != null) {
+        request.body = jsonEncode(body);
+      }
+      eventFluxLog('Connection Initiated', LogEvent.info);
 
-    Request request = Request(
-      type == EventFluxConnectionType.get ? 'GET' : 'POST',
-      Uri.parse(url),
-    );
-    if (header.isNotEmpty) {
-      request.headers.addAll(header);
-    }
-    if (body != null) {
-      request.body = jsonEncode(body);
-    }
-    eventFluxLog('Connection Initiated', LogEvent.info);
-
-    try {
       Future<StreamedResponse> response = _client!.send(request);
 
       ///Listening to the response as a stream
-      response.asStream().listen((data) {
+      response.asStream().listen((data) async {
         eventFluxLog('Connected', LogEvent.info);
 
         eventFluxLog(
             "Status code: ${data.statusCode.toString()}", LogEvent.info);
 
         if (autoReconnect && data.statusCode != 200) {
-          reconnect(
-            type,
-            url,
-            header: header,
-            body: body,
-            autoReconnect: autoReconnect,
-            onError: onError,
-            onConnectionClose: onConnectionClose,
-          );
+          Future.delayed(const Duration(seconds: 10), () {
+            connect(
+              type,
+              url,
+              onConnectionClose: onConnectionClose,
+              autoReconnect: autoReconnect,
+              onError: onError,
+              body: body,
+            );
+          });
           return;
         }
 
@@ -108,9 +110,7 @@ class EventFlux extends EventFluxBase {
                 var value = '';
                 if (field == 'data') {
                   /// If the field is data, we get the data through the substring
-                  value = dataLine.substring(
-                    5,
-                  );
+                  value = dataLine.substring(5);
                 } else {
                   value = match.group(2) ?? '';
                 }
@@ -130,35 +130,29 @@ class EventFlux extends EventFluxBase {
                 }
               },
               cancelOnError: true,
-              // onDone: () {
-              //   eventFluxLog('Stream Closed', LogEvent.info);
-              //   if (autoReconnect && data.statusCode == 200) {
-              //     reconnect(
-              //       type,
-              //       url,
-              //       header: header,
-              //       body: body,
-              //       autoReconnect: autoReconnect,
-              //       onError: onError,
-              //       onConnectionClose: onConnectionClose,
-              //     );
-              //   }
+              onDone: () async {
+                await disconnect();
+                eventFluxLog('Stream Closed', LogEvent.info);
 
-              //   /// When the stream is closed, onClose can be called to execute a function.
-              //   if (onConnectionClose != null) onConnectionClose();
-              // },
-              onError: (error, s) {
+                /// When the stream is closed, onClose can be called to execute a function.
+                if (onConnectionClose != null) onConnectionClose();
+
                 if (autoReconnect) {
-                  reconnect(
-                    type,
-                    url,
-                    header: header,
-                    body: body,
-                    autoReconnect: autoReconnect,
-                    onError: onError,
-                    onConnectionClose: onConnectionClose,
-                  );
+                  Future.delayed(const Duration(seconds: 10), () {
+                    connect(
+                      type,
+                      url,
+                      onConnectionClose: onConnectionClose,
+                      autoReconnect: autoReconnect,
+                      onError: onError,
+                      body: body,
+                    );
+                  });
+                  return;
                 }
+              },
+              onError: (error, s) {
+                disconnect();
                 eventFluxLog(
                     'Data Stream Listen Error: ${data.statusCode}: $error ',
                     LogEvent.error);
@@ -169,11 +163,12 @@ class EventFlux extends EventFluxBase {
                 }
 
                 /// returns the error and the status
-                return EventFluxResponse(
-                    status: EventFluxStatus.disconnected,
-                    errorMessage: EventFluxException(message: error));
+                _streamController?.addError(EventFluxException(message: error));
               },
             );
+
+        eventFluxLog('Outside Data Stream', LogEvent.error);
+        return;
       }, onError: (error, s) {
         eventFluxLog('Stream Listen Error: $error', LogEvent.error);
 
@@ -181,33 +176,20 @@ class EventFlux extends EventFluxBase {
         if (onError != null) onError(EventFluxException(message: error));
 
         /// returns the error and the status
-        return EventFluxResponse(
-            status: EventFluxStatus.disconnected,
-            errorMessage: EventFluxException(message: error));
+        _streamController?.addError(EventFluxException(message: error));
+        return;
       });
 
+      eventFluxLog("Somthing printing here", LogEvent.info);
       Future.delayed(const Duration(seconds: 1), () {});
       return EventFluxResponse(
           status: EventFluxStatus.connected, stream: _streamController!.stream);
-    } catch (error) {
-      if (autoReconnect) {
-        reconnect(
-          type,
-          url,
-          header: header,
-          body: body,
-          autoReconnect: autoReconnect,
-          onError: onError,
-          onConnectionClose: onConnectionClose,
-        );
-      }
-      eventFluxLog('Client Initalise Error: $error', LogEvent.error);
-
-      /// returns the error and the status
-      return EventFluxResponse(
-          status: EventFluxStatus.disconnected,
-          errorMessage: EventFluxException(message: error));
     }
+    Future.delayed(const Duration(seconds: 1), () {});
+
+    return EventFluxResponse(
+        status: EventFluxStatus.connectionInitiated,
+        stream: _streamController?.stream);
   }
 
   /// Disconnects from the event stream.
@@ -218,42 +200,14 @@ class EventFlux extends EventFluxBase {
   Future<EventFluxStatus> disconnect() async {
     eventFluxLog('Disconnecting', LogEvent.info);
     try {
-      if (_client != null) {
-        _client!.close();
-      }
-      if (_streamController != null) {
-        _streamController!.close();
-      }
+      _streamController!.close();
+      _client!.close();
+      Future.delayed(const Duration(seconds: 1), () {});
       eventFluxLog('Disconnected', LogEvent.info);
-
       return EventFluxStatus.disconnected;
     } catch (error) {
       eventFluxLog('Disconnected $error', LogEvent.info);
-
-      return EventFluxStatus.disconnected;
+      return EventFluxStatus.error;
     }
-  }
-
-  /// Reconnects to the event stream.
-  ///
-  /// First, disconnects the current connection, then establishes a new connection.
-  /// [type] and [url] specify the connection parameters.
-  /// Returns the response from the new connection.
-  @override
-  void reconnect(EventFluxConnectionType type, String url,
-      {Map<String, String> header = const {'Accept': 'text/event-stream'},
-      Function()? onConnectionClose,
-      bool autoReconnect = false,
-      Function(EventFluxException)? onError,
-      Map<String, dynamic>? body}) async {
-    Future.delayed(const Duration(seconds: 2), () {
-      disconnect();
-      return connect(type, url,
-          header: header,
-          onConnectionClose: onConnectionClose,
-          autoReconnect: autoReconnect,
-          onError: onError,
-          body: body);
-    });
   }
 }
