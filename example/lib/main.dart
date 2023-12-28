@@ -22,27 +22,30 @@ class MainApp extends StatelessWidget {
                   onPressed: () {
                     String url = 'https://example.com/events';
                     try {
-                      EventFluxResponse response = EventFlux.instance.connect(
+                      EventFlux.instance.connect(
                         EventFluxConnectionType.get,
                         url,
+                        onSuccessCallback: (EventFluxResponse? data) {
+                          if (data == null) {
+                            return;
+                          }
+                          if (data.status == EventFluxStatus.connected) {
+                            data.stream?.listen((event) {
+                              log('Received Event');
+                            });
+                          }
+                        },
                         autoReconnect: true,
-                        onError: (error) {
-                          log('Error Message Logged from UI: ${error.message}');
+                        onError: (EventFluxException error) {
+                          log('Error Message: ${error.message.toString()}');
                         },
                         onConnectionClose: () {
                           log('Connection Closed');
                         },
                       );
-                      if (response.status == EventFluxStatus.connected) {
-                        response.stream?.listen((event) {
-                          log('Received Event');
-                        });
-                      } else {
-                        log('Error');
-                      }
                     } catch (e) {
                       if (e is EventFluxException) {
-                        log('Error Message: ${e.message}');
+                        log('Error Message: ${e.message.toString()}');
                       }
                     }
                   },
@@ -55,7 +58,7 @@ class MainApp extends StatelessWidget {
                       log('Status: $status');
                     } catch (e) {
                       if (e is EventFluxException) {
-                        log('Error Message: ${e.message}');
+                        log('Error Message: ${e.message.toString()}');
                       }
                     }
                   },
