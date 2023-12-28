@@ -181,13 +181,14 @@ class EventFlux extends EventFluxBase {
                   'Data Stream Listen Error: ${data.statusCode}: $error ',
                   LogEvent.error);
 
-              /// Executes the onError function if it is not null
-              if (onError != null) {
-                onError(EventFluxException(message: error));
-              }
+              // /// Executes the onError function if it is not null
+              // if (onError != null) {
+              //   onError(EventFluxException(message: error.toString()));
+              // }
 
               /// returns the error and the status
-              _streamController?.addError(EventFluxException(message: error));
+              // _streamController
+              //     ?.addError(EventFluxException(message: error.toString()));
               _reconnectWithDelay(autoReconnect, type, url, onSuccessCallback,
                   onError: onError,
                   onConnectionClose: onConnectionClose,
@@ -197,6 +198,10 @@ class EventFlux extends EventFluxBase {
       onSuccessCallback(EventFluxResponse(
           status: EventFluxStatus.connected,
           stream: _streamController!.stream));
+    }).catchError((e) async {
+      await disconnect();
+      _reconnectWithDelay(autoReconnect, type, url, onSuccessCallback,
+          onError: onError, onConnectionClose: onConnectionClose, body: body);
     });
   }
 
