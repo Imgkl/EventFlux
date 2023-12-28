@@ -1,25 +1,31 @@
-# EventFlux
+# EventFlux 🌐
+<img src ="https://i.ibb.co/TKCWGhY/Event-Flux.png"> 
 
-EventFlux is a Dart package designed for efficient handling of server-sent event streams. It provides easy-to-use connectivity, data management, and robust error handling for real-time data applications.
+EventFlux is a Dart package designed for efficient handling of server-sent event streams. It provides easy-to-use connectivity, data management, and robust error handling for real-time data applications. 🚀
 
-## Features
+## Inspiration 💡
 
-- **Streamlined Connection Handling**: Easy setup for connecting to event streams with support for both GET and POST requests.
-- **Real-Time Data Management**: Efficient processing and handling of real-time data streams.
-- **Error Handling**: Robust mechanisms to manage connection interruptions and stream errors.
-- **Singleton Client Management**: Ensures a single instance of the client throughout the application.
-- **Customizable**: Extendable to fit various use cases and custom implementations.
+EventFlux was born from the inspiration I found in the [`flutter_client_sse` package](https://pub.dev/packages/flutter_client_sse) by [Pratik Baid](https://github.com/pratikbaid3). His work laid a great foundation, and I aimed to build upon it, adding my own twist to enhance SSE stream management in Dart applications. 🛠️
 
-## Installation
+## Features 🌟
 
-To use EventFlux in your Dart project, add it to your dependencies:
+- **Streamlined Connection Handling**: Easy setup for connecting to event streams with support for both GET and POST requests. 🔌
+- **Auto-Reconnect Capability**: Seamlessly maintains your connection, automatically reconnecting in case of any interruptions. 🔄
+- **Real-Time Data Management**: Efficient processing and handling of real-time data streams. 📈
+- **Error Handling**: Robust mechanisms to manage connection interruptions and stream errors. 🛡️
+- **Singleton Client Management**: Ensures a single instance of the client throughout the application. 🌍
+- **Customizable**: Extendable to fit various use cases and custom implementations. ✨
+
+## Get Started in a Snap 📦
+
+Add EventFlux to your Dart project's dependencies, and you're golden:
 
 ```yaml
 dependencies:
-  eventflux: ^0.6.5
+  eventflux: 
 ```
 
-## Usage
+## How to Use (Spoiler: It's Super Easy) 🔧
 
 Here's a quick example to get you started:
 
@@ -27,30 +33,24 @@ Here's a quick example to get you started:
 import 'package:eventflux/eventflux.dart';
 
 void main() {
-  EventFlux eventFlux = EventFlux.instance;
-
-  // Connect to an event stream
-  EventFluxResponse response = eventFlux.connect(
-    EventFluxConnectionType.get, 
-    'https://example.com/events',
-    autoReconnect: true
-    onError:(e){
-         // Log the error to Sentry or do something.
-    }
-    onConnectionClose: (){
-        // do something.
-    }
-  );
-
-  // Listen to the stream
-  response.stream?.listen((data) {
-    print('New event: ${data.event}, Data: ${data.data}');
-  });
+  // Connect and start the magic!
+   EventFlux.instance.connect(
+     EventFluxConnectionType.get,
+     'https://example.com/events',
+     onSuccessCallback: (EventFluxResponse? response) {
+      response.stream?.listen((data) {
+        // Your data is now in the spotlight!
+      });
+     },
+     onError: (oops) {
+      // Oops! Time to handle those little hiccups.
+    },
+    autoReconnect: true // Keep the party going, automatically!
+   );
 }
 
 ```
-
-## Documentation
+## Need More Info? 📚
 - **EventFlux**: Main class for managing event streams.
 - **EventFluxData**: Data model for events received from the stream.
 - **EventFluxException**: Custom exception handling for EventFlux operations.
@@ -59,10 +59,41 @@ void main() {
 
 For detailed documentation, please see the respective Dart files in the `lib` folder.
 
-## Contributing
+### EventFlux Class Documentation 📖
 
-Contributions are welcome! Feel free to open an issue or submit a pull request.
+`EventFlux` is a Dart class for managing server-sent event streams. It provides methods for connecting to, disconnecting from, and managing SSE streams.
 
-## License
+### Method: connect
 
-This project is licensed under the MIT License
+Connects to a server-sent event stream.
+
+| Parameter          | Type                          | Description                                                   | Default                         |
+|--------------------|-------------------------------|---------------------------------------------------------------|---------------------------------|
+| `type`             | `EventFluxConnectionType`     | The type of HTTP request (GET or POST).                       | -                               |
+| `url`              | `String`                      | The URL of the SSE stream to connect to.                      | -                               |
+| `header`           | `Map<String, String>`         | HTTP headers for the request.                                 | `{'Accept': 'text/event-stream'}`|
+| `onConnectionClose`| `Function()?`                 | Callback function triggered when the connection is closed.    | -                               |
+| `autoReconnect`    | `bool`                        | Whether to automatically reconnect on disconnection.          | `false`                         |
+| `onSuccessCallback`| `Function(EventFluxResponse?)`| Callback invoked upon successful connection.                  | -                               |
+| `onError`          | `Function(EventFluxException)?`| Callback for handling errors.                                | -                               |
+| `body`             | `Map<String, dynamic>?`       | Optional body for POST request types.                         | -                               |
+
+
+### Method: disconnect
+
+Disconnects from the SSE stream.
+
+| Parameter   | Type              | Description                                      |
+|-------------|-------------------|--------------------------------------------------|
+| -           | -                 | This method has no parameters.                   |
+
+Returns a `Future<EventFluxStatus>` indicating the disconnection status.
+
+
+## Be a Part of the Adventure 🤝
+
+Got ideas? Want to contribute? Jump aboard! Open an issue or send a pull request. Let's make EventFlux even more awesome together!
+
+## The Boring (but Important) Stuff 📝
+
+Licensed under MIT - use it freely, but let's play nice and give credit where it's due!

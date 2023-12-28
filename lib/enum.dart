@@ -3,10 +3,12 @@
 /// - `connectionInitiated`: Indicates that the connection process has started.
 /// - `connected`: Represents a successful connection to the event stream.
 /// - `disconnected`: Signifies that the connection has been closed or lost.
+/// - `error`: Indicates that an error has occurred during the connection/disconnection process.
 enum EventFluxStatus {
   connectionInitiated,
   connected,
   disconnected,
+  error,
 }
 
 /// Enum to define the type of HTTP connection to be used in EventFlux.
