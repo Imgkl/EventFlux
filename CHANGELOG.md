@@ -1,6 +1,10 @@
 
 # Changelog 📝
 
+### [v1.0.0+2]
+- If the connection is intentionaly severed/disconnected by calling `disconnet()` method, then the `autoReconnect` will not try to reconnect the connection again and again. 
+- I know, it's dumb mistake I made. Sorry. 🥹
+
 ### [v1.0.0] 🚀
 
 #### Breaking

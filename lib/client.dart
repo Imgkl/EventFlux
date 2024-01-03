@@ -1,4 +1,5 @@
 /// Imports
+library;
 
 import 'dart:async';
 import 'dart:convert';
@@ -22,6 +23,7 @@ class EventFlux extends EventFluxBase {
   static EventFlux get instance => _instance;
   Client? _client;
   StreamController<EventFluxData>? _streamController;
+  bool _isExplicitDisconnect = false;
 
   /// Establishes a connection to a server-sent event (SSE) stream.
   ///
@@ -83,8 +85,28 @@ class EventFlux extends EventFluxBase {
       required Function(EventFluxResponse?) onSuccessCallback,
       Function(EventFluxException)? onError,
       Map<String, dynamic>? body}) {
+    _isExplicitDisconnect = false;
+    _start(type, url,
+        header: header,
+        autoReconnect: autoReconnect,
+        onSuccessCallback: onSuccessCallback,
+        onError: onError,
+        onConnectionClose: onConnectionClose,
+        body: body);
+  }
+
+  /// An internal method to handle the connection process.
+  /// this is abstracted out to set the `_isExplicitDisconnect` variable to `false` before connecting.
+  void _start(EventFluxConnectionType type, String url,
+      {Map<String, String> header = const {'Accept': 'text/event-stream'},
+      Function()? onConnectionClose,
+      bool autoReconnect = false,
+      required Function(EventFluxResponse?) onSuccessCallback,
+      Function(EventFluxException)? onError,
+      Map<String, dynamic>? body}) {
     /// Initalise variables
     _client = Client();
+    _isExplicitDisconnect = false;
 
     _streamController = StreamController<EventFluxData>();
     RegExp lineRegex = RegExp(r'^([^:]*)(?::)?(?: )?(.*)?$');
@@ -105,16 +127,22 @@ class EventFlux extends EventFluxBase {
 
     Future<StreamedResponse> response = _client!.send(request);
 
-    eventFluxLog("Somthing printing here", LogEvent.info);
-
     response.then((data) async {
       eventFluxLog('Connected', LogEvent.info);
 
       eventFluxLog("Status code: ${data.statusCode.toString()}", LogEvent.info);
 
       if (autoReconnect && data.statusCode != 200) {
-        _reconnectWithDelay(autoReconnect, type, url, onSuccessCallback,
-            onError: onError, onConnectionClose: onConnectionClose, body: body);
+        _reconnectWithDelay(
+          _isExplicitDisconnect,
+          autoReconnect,
+          type,
+          url,
+          onSuccessCallback,
+          onError: onError,
+          onConnectionClose: onConnectionClose,
+          body: body,
+        );
         return;
       }
 
@@ -163,44 +191,54 @@ class EventFlux extends EventFluxBase {
             },
             cancelOnError: true,
             onDone: () async {
-              await disconnect();
+              _stop();
               eventFluxLog('Stream Closed', LogEvent.info);
 
               /// When the stream is closed, onClose can be called to execute a function.
               if (onConnectionClose != null) onConnectionClose();
 
-              _reconnectWithDelay(autoReconnect, type, url, onSuccessCallback,
-                  onError: onError,
-                  onConnectionClose: onConnectionClose,
-                  body: body);
+              _reconnectWithDelay(
+                _isExplicitDisconnect,
+                autoReconnect,
+                type,
+                url,
+                onSuccessCallback,
+                onError: onError,
+                onConnectionClose: onConnectionClose,
+                body: body,
+              );
             },
             onError: (error, s) async {
-              disconnect();
+              _stop();
 
               eventFluxLog(
                   'Data Stream Listen Error: ${data.statusCode}: $error ',
                   LogEvent.error);
 
-              // /// Executes the onError function if it is not null
-              // if (onError != null) {
-              //   onError(EventFluxException(message: error.toString()));
-              // }
+              /// Executes the onError function if it is not null
+              if (onError != null) {
+                onError(EventFluxException(message: error.toString()));
+              }
 
-              /// returns the error and the status
-              // _streamController
-              //     ?.addError(EventFluxException(message: error.toString()));
-              _reconnectWithDelay(autoReconnect, type, url, onSuccessCallback,
-                  onError: onError,
-                  onConnectionClose: onConnectionClose,
-                  body: body);
+              _reconnectWithDelay(
+                _isExplicitDisconnect,
+                autoReconnect,
+                type,
+                url,
+                onSuccessCallback,
+                onError: onError,
+                onConnectionClose: onConnectionClose,
+                body: body,
+              );
             },
           );
       onSuccessCallback(EventFluxResponse(
           status: EventFluxStatus.connected,
           stream: _streamController!.stream));
     }).catchError((e) async {
-      await disconnect();
-      _reconnectWithDelay(autoReconnect, type, url, onSuccessCallback,
+      _stop();
+      _reconnectWithDelay(
+          _isExplicitDisconnect, autoReconnect, type, url, onSuccessCallback,
           onError: onError, onConnectionClose: onConnectionClose, body: body);
     });
   }
@@ -217,6 +255,15 @@ class EventFlux extends EventFluxBase {
   /// ```
   @override
   Future<EventFluxStatus> disconnect() async {
+    _isExplicitDisconnect = true;
+    return await _stop();
+  }
+
+  /// Internal method to handle disconnection.
+  /// this is abstracted out to set the `_isExplicitDisconnect` variable to `true` while disconnecting.
+  /// This is to prevent reconnection if the user has explicitly disconnected.
+  /// This returns the disconnection status enum.
+  Future<EventFluxStatus> _stop() async {
     eventFluxLog('Disconnecting', LogEvent.info);
     try {
       _streamController!.close();
@@ -235,14 +282,22 @@ class EventFlux extends EventFluxBase {
   /// This method is triggered in case of disconnection, especially
   /// when `autoReconnect` is enabled. It waits for a specified duration (2 seconds),
   /// before attempting to reconnect.
-  void _reconnectWithDelay(bool autoReconnect, EventFluxConnectionType type,
-      String url, Function(EventFluxResponse?) onSuccessCallback,
+
+  void _reconnectWithDelay(
+
+      /// If _isExplicitDisconnect is `true`, it does not attempt to reconnect. This is to prevent reconnection if the user has explicitly disconnected.
+      /// This is an internal variable, this doen't mean anything to the user.
+      bool isExplicitDisconnect,
+      bool autoReconnect,
+      EventFluxConnectionType type,
+      String url,
+      Function(EventFluxResponse?) onSuccessCallback,
       {Function(EventFluxException)? onError,
       Function()? onConnectionClose,
       Map<String, dynamic>? body}) async {
-    if (autoReconnect) {
+    if (autoReconnect && !isExplicitDisconnect) {
       await Future.delayed(const Duration(seconds: 2), () {
-        connect(type, url,
+        _start(type, url,
             onSuccessCallback: onSuccessCallback,
             autoReconnect: autoReconnect,
             onError: onError,
