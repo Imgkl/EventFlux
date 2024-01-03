@@ -1,5 +1,5 @@
 # EventFlux 🌐
-<img src ="https://i.ibb.co/TKCWGhY/Event-Flux.png"> 
+<img src ="https://i.ibb.co/pPCd24p/F.png"> 
 
 EventFlux is a Dart package designed for efficient handling of server-sent event streams. It provides easy-to-use connectivity, data management, and robust error handling for real-time data applications. 🚀
 
