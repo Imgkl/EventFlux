@@ -1,11 +1,13 @@
 name: eventflux
 description: "Efficient handling of server-sent event streams with easy connectivity and data management."
-version: 1.0.0+5
+version: 1.0.0+6
 homepage: https://gokula.dev
 repository: https://github.com/Imgkl/EventFlux
 issue_tracker: https://github.com/Imgkl/EventFlux/issues
 topics: [sse, server-sent-events, streaming-events]
-
+screenshots:
+ - description: 'The EventFlux Logo'
+   path: screenshot/logo.webp
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -23,9 +25,6 @@ dev_dependencies:
 
 flutter:
 
-screenshots:
-  - description: The EventFlux logo.
-    path: screenshot/logo.jpg
   
   
   
