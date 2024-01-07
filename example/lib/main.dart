@@ -31,7 +31,7 @@ class MainApp extends StatelessWidget {
                           }
                           if (data.status == EventFluxStatus.connected) {
                             data.stream?.listen((event) {
-                              log('Received Event');
+                              log(event.data);
                             });
                           }
                         },

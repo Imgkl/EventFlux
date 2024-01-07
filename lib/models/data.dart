@@ -31,13 +31,13 @@
 
 class EventFluxData {
   /// Event ID
-  String? id = '';
+  String id = '';
 
   /// Event Name
-  String? event = '';
+  String event = '';
 
   /// Event Data
-  String? data = '';
+  String data = '';
 
   /// Constructs an instance of `EventFluxData` with given id, event, and data.
   EventFluxData({required this.data, required this.id, required this.event});

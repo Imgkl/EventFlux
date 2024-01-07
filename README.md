@@ -1,11 +1,11 @@
 # EventFlux 🌐
-<img src ="https://i.ibb.co/hKtX66q/F.png"> 
+<img src ="https://i.ibb.co/R4RcJVB/F.png"> 
 
 EventFlux is a Dart package designed for efficient handling of server-sent event streams. It provides easy-to-use connectivity, data management, and robust error handling for real-time data applications. 🚀
 
 ## Inspiration 💡
 
-EventFlux was born from the inspiration I found in the [`flutter_client_sse` package](https://pub.dev/packages/flutter_client_sse) by [Pratik Baid](https://github.com/pratikbaid3). His work laid a great foundation, and I aimed to build upon it, adding my own twist to enhance SSE stream management in Dart applications. 🛠️
+EventFlux was born from the inspiration I found in the [`flutter_client_sse` package](https://pub.dev/packages/flutter_client_sse) by [Pratik Baid](https://github.com/pratikbaid3). His work laid a great foundation, and I aimed to build upon it, adding my own twist to enhance SSE stream management with better features. 🛠️
 
 ## Features 🌟
 

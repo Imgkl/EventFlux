@@ -180,7 +180,7 @@ class EventFlux extends EventFluxBase {
                   break;
                 case 'data':
                   currentEventFluxData.data =
-                      '${currentEventFluxData.data ?? ''}$value\n';
+                      '${currentEventFluxData.data}$value\n';
                   break;
                 case 'id':
                   currentEventFluxData.id = value;
