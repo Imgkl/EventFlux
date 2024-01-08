@@ -1,11 +1,11 @@
 
 # Changelog 📝
 
-### [v1.0.1]
+### [v1.0.1] 🛠️
 - Fixes issue [#2](https://github.com/Imgkl/EventFlux/issues/2)
     - Retry doesn't use provided headers.   
 
-### [v1.0.0+2]
+### [v1.0.0+2] 🛠️
 - If the connection is intentionaly severed/disconnected by calling `disconnet()` method, then the `autoReconnect` will not try to reconnect the connection again and again. 
     - I know, it's dumb mistake I made. Sorry. 🥹
 
