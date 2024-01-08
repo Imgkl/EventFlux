@@ -138,6 +138,7 @@ class EventFlux extends EventFluxBase {
           autoReconnect,
           type,
           url,
+          header,
           onSuccessCallback,
           onError: onError,
           onConnectionClose: onConnectionClose,
@@ -202,6 +203,7 @@ class EventFlux extends EventFluxBase {
                 autoReconnect,
                 type,
                 url,
+                header,
                 onSuccessCallback,
                 onError: onError,
                 onConnectionClose: onConnectionClose,
@@ -225,6 +227,7 @@ class EventFlux extends EventFluxBase {
                 autoReconnect,
                 type,
                 url,
+                header,
                 onSuccessCallback,
                 onError: onError,
                 onConnectionClose: onConnectionClose,
@@ -237,8 +240,8 @@ class EventFlux extends EventFluxBase {
           stream: _streamController!.stream));
     }).catchError((e) async {
       _stop();
-      _reconnectWithDelay(
-          _isExplicitDisconnect, autoReconnect, type, url, onSuccessCallback,
+      _reconnectWithDelay(_isExplicitDisconnect, autoReconnect, type, url,
+          header, onSuccessCallback,
           onError: onError, onConnectionClose: onConnectionClose, body: body);
     });
   }
@@ -291,6 +294,7 @@ class EventFlux extends EventFluxBase {
       bool autoReconnect,
       EventFluxConnectionType type,
       String url,
+      Map<String, String> header,
       Function(EventFluxResponse?) onSuccessCallback,
       {Function(EventFluxException)? onError,
       Function()? onConnectionClose,
@@ -301,6 +305,7 @@ class EventFlux extends EventFluxBase {
             onSuccessCallback: onSuccessCallback,
             autoReconnect: autoReconnect,
             onError: onError,
+            header: header,
             onConnectionClose: onConnectionClose,
             body: body);
       });
