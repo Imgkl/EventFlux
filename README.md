@@ -109,6 +109,7 @@ void main() {
 
 ℹ️ Remember to disconnect all instances when you are done with it to avoid memory leaks.
 &nbsp;<br>
+
 </details>
 
 ## Need More Info? 📚
