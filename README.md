@@ -62,7 +62,7 @@ void main() {
 }
 
 ```
-
+&nbsp;<br>
 </details>
 
 <details>
@@ -108,7 +108,7 @@ void main() {
 ```
 
 ℹ️ Remember to disconnect all instances when you are done with it to avoid memory leaks.
-
+&nbsp;<br>
 </details>
 
 ## Need More Info? 📚
@@ -139,6 +139,7 @@ Connects to a server-sent event stream.
 | `onSuccessCallback` | `Function(EventFluxResponse?)`  | Callback invoked upon successful connection.               | -                                 |
 | `onError`           | `Function(EventFluxException)?` | Callback for handling errors.                              | -                                 |
 | `body`              | `Map<String, dynamic>?`         | Optional body for POST request types.                      | -                                 |
+&nbsp;<br>
 </details>
 
 <details>
@@ -151,6 +152,7 @@ Disconnects from the SSE stream.
 | -         | -    | This method has no parameters. |
 
 Returns a `Future<EventFluxStatus>` indicating the disconnection status.
+&nbsp;<br>
 </details>
 
 <details>
@@ -161,6 +163,7 @@ Returns a `Future<EventFluxStatus>` indicating the disconnection status.
 | -         | -    | This method has no parameters. |
 
 Returns a new instance of `EventFlux`, this is useful for having multiple SSE connections.
+&nbsp;<br>
 </details>
 
 ## Be a Part of the Adventure 🤝
