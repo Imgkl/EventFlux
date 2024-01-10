@@ -80,7 +80,8 @@ void main() {
   EventFlux e2 = EventFlux.spawn();
 
    // First connection - firing up!
-  e1.connect(EventFluxConnectionType.get, 'url',
+  e1.connect(EventFluxConnectionType.get, 
+     'https://example1.com/events',
      onSuccessCallback: (EventFluxResponse? data) {
        data.stream?.listen((data) {
         // Your 1st Stream's data is being fetched!
@@ -92,7 +93,8 @@ void main() {
   );
 
    // Second connection - firing up!
-   e2.connect(EventFluxConnectionType.get, 'url',
+   e2.connect(EventFluxConnectionType.get,
+     'https://example2.com/events',
      onSuccessCallback: (EventFluxResponse? data) {
        data.stream?.listen((data) {
         // Your 2nd Stream's data is also being fetched!
