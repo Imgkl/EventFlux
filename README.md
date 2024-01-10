@@ -167,7 +167,7 @@ Returns a `Future<EventFluxStatus>` indicating the disconnection status.
 | --------- | ---- | ------------------------------ |
 | -         | -    | This method has no parameters. |
 
-Returns a new instance of `EventFlux`, this is useful for having multiple SSE connections.
+Returns a new instance of `EventFlux`, this is used for having multiple SSE connections.
 &nbsp;<br>
 </details>
 
