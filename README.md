@@ -17,18 +17,19 @@ EventFlux was born from the inspiration I found in the [`flutter_client_sse` pac
 - **Versatile Instance Creation**: Offers both singleton and multi-instance options for tailored SSE connections. 🌍
 - **Customizable**: Extendable to fit various use cases and custom implementations. ✨
 
+## EventFlux for Every Scenario 🌟
+
+<img src="https://i.ibb.co/fQ1WpWX/flow-explanation.png" width="600"/>
+
 ## Get Started in a Snap 📦
 
 Add EventFlux to your Dart project's dependencies, and you're golden:
 
 ```yaml
 dependencies:
-  eventflux:
+  eventflux: ^1.5.0
 ```
 
-## Your SSE, Your Way: EventFlux for Every Scenario 🌟
-
-<img src="https://i.ibb.co/fQ1WpWX/flow-explanation.png" width="600"/>
 
 ## How to Use (Spoiler: It's Super Easy) 🔧
 
@@ -150,6 +151,16 @@ Disconnects from the SSE stream.
 | -         | -    | This method has no parameters. |
 
 Returns a `Future<EventFluxStatus>` indicating the disconnection status.
+</details>
+
+<details>
+<summary><b>spawn</b></summary>
+
+| Parameter | Type | Description                    |
+| --------- | ---- | ------------------------------ |
+| -         | -    | This method has no parameters. |
+
+Returns a new instance of `EventFlux`, this is useful for having multiple SSE connections.
 </details>
 
 ## Be a Part of the Adventure 🤝
