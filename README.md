@@ -158,6 +158,7 @@ Returns a `Future<EventFluxStatus>` indicating the disconnection status.
 <details>
 <summary><b>spawn</b></summary>
 &nbsp;<br>
+
 | Parameter | Type | Description                    |
 | --------- | ---- | ------------------------------ |
 | -         | -    | This method has no parameters. |
