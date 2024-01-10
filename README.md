@@ -19,7 +19,7 @@ EventFlux was born from the inspiration I found in the [`flutter_client_sse` pac
 
 ## EventFlux for Every Scenario 🌟
 
-<img src="https://i.ibb.co/fQ1WpWX/flow-explanation.png" width="600"/>
+<img src="https://i.ibb.co/99Rcx0R/flow-explanation.png" width="600"/>
 
 ## Get Started in a Snap 📦
 
