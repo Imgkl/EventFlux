@@ -1,8 +1,15 @@
 
 # Changelog 📝
 
+### [v1.5.0] 🚀
+- Added `spwan` method
+    - Solves [#3](https://github.com/Imgkl/EventFlux/issues/3)
+    - Provides users the flexibility to implement multiple SSE connections.
+    - See the "Supercharged" section in the README for usage instructions.
+
+
 ### [v1.0.1] 🛠️
-- Fixes issue [#2](https://github.com/Imgkl/EventFlux/issues/2)
+- Solves [#2](https://github.com/Imgkl/EventFlux/issues/2)
     - Retry doesn't use provided headers.   
 
 ### [v1.0.0+2] 🛠️
