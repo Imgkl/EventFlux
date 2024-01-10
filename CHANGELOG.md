@@ -2,7 +2,8 @@
 # Changelog 📝
 
 ### v1.5.0 🚀
-- Added `spwan` method
+#### Added
+- `spwan` method
     - Solves [#3](https://github.com/Imgkl/EventFlux/issues/3)
     - Provides users the flexibility to implement multiple SSE connections.
     - See the "Supercharged" section in the README for usage instructions.
@@ -25,7 +26,7 @@
 ### v0.6.2 🚀
 
 #### Added
-- Added support for `autoReconnect` on connect method.
+- support for `autoReconnect` on connect method.
 
 ### v0.6.1 🚀
 
