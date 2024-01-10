@@ -37,7 +37,7 @@ Here's a quick example to get you started:
 
 <details>
 <summary>The Simple Streamer ✨</summary>
-
+&nbsp;<br>
 Need just one SSE connection? It's a breeze with EventFlux! Perfect for when your app is dancing solo with a single SSE.
 
 
@@ -67,7 +67,7 @@ void main() {
 
 <details>
 <summary>Supercharged 🚀</summary>
-
+&nbsp;<br>
 When your app just need a multiple parallel SSE connections, use this.
 
 ```dart
@@ -126,7 +126,7 @@ For detailed documentation, please see the respective Dart files in the `lib` fo
 `EventFlux` is a Dart class for managing server-sent event streams. It provides methods for connecting to, disconnecting from, and managing SSE streams.
 <details>
 <summary><b>connect</b></summary>
-
+&nbsp;<br>
 Connects to a server-sent event stream.
 
 | Parameter           | Type                            | Description                                                | Default                           |
@@ -143,7 +143,7 @@ Connects to a server-sent event stream.
 
 <details>
 <summary><b>disconnect</b></summary>
-
+&nbsp;<br>
 Disconnects from the SSE stream.
 
 | Parameter | Type | Description                    |
@@ -155,7 +155,7 @@ Returns a `Future<EventFluxStatus>` indicating the disconnection status.
 
 <details>
 <summary><b>spawn</b></summary>
-
+&nbsp;<br>
 | Parameter | Type | Description                    |
 | --------- | ---- | ------------------------------ |
 | -         | -    | This method has no parameters. |
