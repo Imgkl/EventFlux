@@ -139,6 +139,7 @@ Connects to a server-sent event stream.
 | `onSuccessCallback` | `Function(EventFluxResponse?)`  | Callback invoked upon successful connection.               | -                                 |
 | `onError`           | `Function(EventFluxException)?` | Callback for handling errors.                              | -                                 |
 | `body`              | `Map<String, dynamic>?`         | Optional body for POST request types.                      | -                                 |
+
 &nbsp;<br>
 </details>
 
