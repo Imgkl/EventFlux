@@ -25,6 +25,32 @@ class EventFlux extends EventFluxBase {
   StreamController<EventFluxData>? _streamController;
   bool _isExplicitDisconnect = false;
 
+  /// Factory method for spawning new instances of `EventFlux`.
+  ///
+  /// This method creates and returns a new instance of `EventFlux`. It's useful
+  /// for scenarios where multiple, separate `EventFlux` instances are needed,
+  /// each operating independently from one another. This allows for different
+  /// SSE connections or functionalities to be managed separately within the same application.
+  ///
+  /// Returns:
+  ///   - A new `EventFlux` instance.
+  ///
+  /// Usage Example:
+  /// ```dart
+  /// EventFlux eventFluxInstance1 = EventFlux.spawn();
+  /// EventFlux eventFluxInstance2 = EventFlux.spawn();
+  ///
+  ///
+  /// eventFluxInstance1.connect(/* connection parameters */);
+  /// eventFluxInstance2.connect(/* connection parameters */);
+  /// ```
+  ///
+  /// This method is ideal when distinct, isolated instances of `EventFlux` are required,
+  /// offering more control over multiple SSE connections.
+  static EventFlux spawn() {
+    return EventFlux._();
+  }
+
   /// Establishes a connection to a server-sent event (SSE) stream.
   ///
   /// This method sets up a connection to an SSE stream based on the provided URL and connection type.
