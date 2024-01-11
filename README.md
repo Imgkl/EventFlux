@@ -14,7 +14,7 @@ EventFlux was born from the inspiration I found in the [`flutter_client_sse` pac
 - **Auto-Reconnect Capability**: Seamlessly maintains your connection, automatically reconnecting in case of any interruptions. 🔄
 - **Real-Time Data Management**: Efficient processing and handling of real-time data streams. 📈
 - **Error Handling**: Robust mechanisms to manage connection interruptions and stream errors. 🛡️
-- **Versatile Instance Creation**: Offers both singleton and multi-instance options for tailored SSE connections. 🌍
+- **Versatile Instance Creation**: Offers both singleton and factory patterns for tailored SSE connections. 🌍
 - **Customizable**: Extendable to fit various use cases and custom implementations. ✨
 
 ## EventFlux for Every Scenario 🌟
