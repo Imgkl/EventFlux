@@ -1,6 +1,11 @@
 
 # Changelog 📝
 
+### v1.5.1 📝
+
+#### Updated 
+- Readme's `EventFlux for Every Scenario` Section
+
 ### v1.5.0 🚀
 #### Added
 - `spwan` method

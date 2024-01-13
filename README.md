@@ -19,7 +19,7 @@ EventFlux was born from the inspiration I found in the [`flutter_client_sse` pac
 
 ## EventFlux for Every Scenario 🌟
 
-<img src="https://i.ibb.co/99Rcx0R/flow-explanation.png" width="600"/>
+<img src="https://i.ibb.co/gDWrnb0/flow.png" width="600"/>
 
 ## Get Started in a Snap 📦
 
@@ -27,7 +27,7 @@ Add EventFlux to your Dart project's dependencies, and you're golden:
 
 ```yaml
 dependencies:
-  eventflux: ^1.5.0
+  eventflux: ^1.5.1
 ```
 
 
@@ -128,7 +128,7 @@ For detailed documentation, please see the respective Dart files in the `lib` fo
 
 `EventFlux` is a Dart class for managing server-sent event streams. It provides methods for connecting to, disconnecting from, and managing SSE streams.
 <details>
-<summary><b>connect</b></summary>
+<summary><b>Connect</b></summary>
 &nbsp;<br>
 Connects to a server-sent event stream.
 
@@ -147,7 +147,7 @@ Connects to a server-sent event stream.
 </details>
 
 <details>
-<summary><b>disconnect</b></summary>
+<summary><b>Disconnect</b></summary>
 &nbsp;<br>
 Disconnects from the SSE stream.
 
@@ -160,7 +160,7 @@ Returns a `Future<EventFluxStatus>` indicating the disconnection status.
 </details>
 
 <details>
-<summary><b>spawn</b></summary>
+<summary><b>Spawn</b></summary>
 &nbsp;<br>
 
 | Parameter | Type | Description                    |
