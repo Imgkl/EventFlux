@@ -4,7 +4,7 @@
 ### v1.6.0 🚀
 
 #### Added
-- Web support
+- Web support [#5](https://github.com/Imgkl/EventFlux/issues/5)
     - Your existing code now flawlessly extends its magic to the web – no extra setup required, just pure, uninterrupted functionality across platforms!
 
 ### v1.5.1 📝
