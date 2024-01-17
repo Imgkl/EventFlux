@@ -10,13 +10,11 @@ EventFlux is a Dart package designed for efficient handling of server-sent event
 |----------|---------|---------------------------------|
 | Android  | ✅      | Fully tested and functioning smoothly. |
 | iOS      | ✅      | As Steve Jobs would say, "It just works."      |
-| Web      | 🏗️     | Web's getting there - building as we speak!|
+| Web      | ✅     | Full functionality unlocked! |
 | MacOS    | ✅      | Smooth sailing on MacOS.       |
 | Windows  | ❓      | Windows users, where you at? Need testers! |
 | Linux    | ❓      | Calling all penguins - help me to test on Linux! |
 
-
-*Pssst... see those question marks? That's your cue, tech adventurers! Dive in, test, and tell me all about it.* 🚀🛠️
 
 
 ## Inspiration 💡
@@ -42,7 +40,7 @@ Add EventFlux to your Dart project's dependencies, and you're golden:
 
 ```yaml
 dependencies:
-  eventflux: ^1.5.1
+  eventflux: ^1.6.0
 ```
 
 

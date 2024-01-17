@@ -1,6 +1,12 @@
 
 # Changelog 📝
 
+### v1.6.0 🚀
+
+#### Added
+- Web support
+    - Your existing code now flawlessly extends its magic to the web – no extra setup required, just pure, uninterrupted functionality across platforms!
+
 ### v1.5.1 📝
 
 #### Updated 
