@@ -10,6 +10,8 @@ import 'package:eventflux/models/data.dart';
 import 'package:eventflux/models/exception.dart';
 import 'package:eventflux/models/response.dart';
 import 'package:eventflux/utils.dart';
+import 'package:fetch_client/fetch_client.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 
 /// A class for managing event-driven data streams using Server-Sent Events (SSE).
@@ -131,7 +133,10 @@ class EventFlux extends EventFluxBase {
       Function(EventFluxException)? onError,
       Map<String, dynamic>? body}) {
     /// Initalise variables
-    _client = Client();
+    /// Create a new HTTP client based on the platform
+    _client = _getClientBasedOnPlatform();
+
+    /// Set `_isExplicitDisconnect` to `false` before connecting.
     _isExplicitDisconnect = false;
 
     _streamController = StreamController<EventFluxData>();
@@ -265,6 +270,9 @@ class EventFlux extends EventFluxBase {
           status: EventFluxStatus.connected,
           stream: _streamController!.stream));
     }).catchError((e) async {
+      if (onError != null) {
+        onError(EventFluxException(message: e.toString()));
+      }
       _stop();
       _reconnectWithDelay(_isExplicitDisconnect, autoReconnect, type, url,
           header, onSuccessCallback,
@@ -295,8 +303,8 @@ class EventFlux extends EventFluxBase {
   Future<EventFluxStatus> _stop() async {
     eventFluxLog('Disconnecting', LogEvent.info);
     try {
-      _streamController!.close();
-      _client!.close();
+      _streamController?.close();
+      _client?.close();
       Future.delayed(const Duration(seconds: 1), () {});
       eventFluxLog('Disconnected', LogEvent.info);
       return EventFluxStatus.disconnected;
@@ -335,6 +343,24 @@ class EventFlux extends EventFluxBase {
             onConnectionClose: onConnectionClose,
             body: body);
       });
+    }
+  }
+
+  /// Internal method to get the HTTP client based on the platform.
+  ///
+  /// This method checks if the code is running on a web platform using `kIsWeb`.
+  /// - If on the web, it returns a `FetchClient` with CORS mode enabled to handle
+  ///   web-specific network requests.
+  /// - For non-web platforms (like Android, iOS, MacOS, etc.), it returns a standard
+  ///   `Client` instance.
+  ///
+  /// Usage of `FetchClient` with CORS mode is necessary for web due to browser
+  /// security restrictions on cross-origin requests.
+  Client _getClientBasedOnPlatform() {
+    if (kIsWeb) {
+      return FetchClient(mode: RequestMode.cors);
+    } else {
+      return Client();
     }
   }
 }
