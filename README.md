@@ -15,7 +15,7 @@ EventFlux is a Dart package designed for efficient handling of server-sent event
 | Windows  | ❓      | Windows users, where you at? Need testers! |
 | Linux    | ❓      | Calling all penguins - help me to test on Linux! |
 
-*Pssst... see those question marks? That's your cue, tech adventurers! Dive in, test, and tell us all about it.* 🚀🛠️
+*Pssst... see those question marks? That's your cue, tech adventurers! Dive in, test, and tell me all about it.* 🚀🛠️
 
 ## Inspiration 💡
 
