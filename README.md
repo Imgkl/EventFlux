@@ -7,6 +7,8 @@ EventFlux is a Dart package designed for efficient handling of server-sent event
 <details>
 <summary> Supported Platforms </summary>
 
+<br>
+
 | Platform | Status  | What's the Scoop?               |
 |----------|---------|---------------------------------|
 | Android  | ✅      | Fully tested and functioning smoothly. |
