@@ -6,14 +6,11 @@ EventFlux is a Dart package designed for efficient handling of server-sent event
 
 
 ## Supported Platforms
-| Platform | Status  | What's the Scoop?               |
-|----------|---------|---------------------------------|
-| Android  | ✅      | Fully tested and functioning smoothly. |
-| iOS      | ✅      | As Steve Jobs would say, "It just works."      |
-| Web      | ✅     | Full functionality unlocked! |
-| MacOS    | ✅      | Smooth sailing on MacOS.       |
-| Windows  | ❓      | Windows users, where you at? Need testers! |
-| Linux    | ❓      | Calling all penguins - help me to test on Linux! |
+| Adroid | iOS  |  Web | MacOS | Windows | Linux |
+| ------ | ---- | ---- | ----- | ------- | ----- |
+| ✅|✅|✅|✅|❓|❓| 
+
+*Pssst... see those question marks? That's your cue, tech adventurers! Dive in, test, and tell me all about it.* 🚀🛠️
 
 
 
