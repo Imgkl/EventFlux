@@ -11,12 +11,6 @@ library eventflux;
 ///     responsible for managing the connection to the event source.
 ///   - `enum.dart`: Defines enums used across the EventFlux library, such as
 ///     `EventFluxConnectionType` and `EventFluxStatus`.
-///   - `eventflux.dart`: Provides the main EventFlux class, which is the central point of
-///     interaction with the EventFlux functionality.
-///   - `models/base.dart`: Includes the base classes that are extended by other components
-///     within the library, such as `EventFluxBase`.
-///   - `models/data.dart`: Defines the `EventFluxData` model, which represents the data
-///     structure for events handled by EventFlux.
 ///   - `models/exception.dart`: Contains the `EventFluxException` class, used to represent
 ///     exceptions specific to EventFlux operations.
 ///   - `models/response.dart`: Provides the `EventFluxResponse` class, encapsulating the
@@ -36,8 +30,5 @@ library eventflux;
 /// and organized way of accessing its components.
 export 'client.dart';
 export 'enum.dart';
-export 'eventflux.dart';
-export 'models/base.dart';
-export 'models/data.dart';
 export 'models/exception.dart';
 export 'models/response.dart';
