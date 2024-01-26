@@ -1,14 +1,18 @@
 
 # Changelog 📝
 
-### v1.6.0 🚀
+### v1.6.6
+#### Breaking
+- Disabled web support due to dependancy issue.
+    - Refer [#5](https://github.com/Imgkl/EventFlux/issues/5) for more info.
 
+
+### v1.6.0 🚀
 #### Added
 - Web support [#5](https://github.com/Imgkl/EventFlux/issues/5)
     - Your existing code now flawlessly extends its magic to the web – no extra setup required, just pure, uninterrupted functionality across platforms!
 
 ### v1.5.1 📝
-
 #### Updated 
 - Readme's `EventFlux for Every Scenario` Section
 
@@ -29,18 +33,15 @@
     - I know, it's dumb mistake I made. Sorry. 🥹
 
 ### v1.0.0 🚀
-
 #### Breaking
 - Updated the `connect` method to be a void function instead of returning `EventFluxResponse`. This change accompanies the introduction of the `onSuccessCallback` parameter, which provides the `EventFluxResponse` via callback. This modification simplifies the connection process, making reconnections and stream updates more predictable and manageable.
 
 
 ### v0.6.2 🚀
-
 #### Added
 - support for `autoReconnect` on connect method.
 
 ### v0.6.1 🚀
-
 #### Added
 - Core functionality for connecting to server-sent event streams.
 - `EventFlux` class to manage event stream connections.
