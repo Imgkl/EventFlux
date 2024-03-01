@@ -1,6 +1,10 @@
 
 # Changelog 📝
 
+### v1.6.7 🛠️
+- Updated Http package version to `1.2.1`
+
+
 ### v1.6.6
 #### Breaking
 - Disabled web support due to dependancy issue.
