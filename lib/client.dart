@@ -161,6 +161,14 @@ class EventFlux extends EventFluxBase {
 
       eventFluxLog("Status code: ${data.statusCode.toString()}", LogEvent.info);
 
+      if (data.statusCode != 200) {
+        if (onError != null) {
+          onError(EventFluxException(
+              message:
+                  'Connection Error Status:${data.statusCode}, Connection Error Reason: ${data.reasonPhrase}'));
+        }
+      }
+
       if (autoReconnect && data.statusCode != 200) {
         _reconnectWithDelay(
           _isExplicitDisconnect,
