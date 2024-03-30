@@ -1,6 +1,6 @@
 name: eventflux
 description: "Efficient handling of server-sent event streams with easy connectivity and data management."
-version: 1.6.7+1
+version: 1.6.8
 homepage: https://gokula.dev
 repository: https://github.com/Imgkl/EventFlux
 issue_tracker: https://github.com/Imgkl/EventFlux/issues

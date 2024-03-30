@@ -1,6 +1,10 @@
 
 # Changelog 📝
 
+### v1.6.8 🛠️
+- Solves [#11](https://github.com/Imgkl/EventFlux/issues/11)
+    - `onError` method not getting triggered for non 200 status codes.
+
 ### v1.6.7 🛠️
 - Updated Http package version to `1.2.1`
 
