@@ -161,7 +161,7 @@ class EventFlux extends EventFluxBase {
 
       eventFluxLog("Status code: ${data.statusCode.toString()}", LogEvent.info);
 
-      if (data.statusCode != 200) {
+      if (data.statusCode < 200 || data.statusCode >= 300) {
         if (onError != null) {
           onError(EventFluxException(
               message:
