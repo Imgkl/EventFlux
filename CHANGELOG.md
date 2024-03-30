@@ -1,7 +1,7 @@
 
 # Changelog 📝
 
-### v1.6.8 🛠️
+### v1.6.9 🛠️
 - Solves [#11](https://github.com/Imgkl/EventFlux/issues/11)
     - `onError` method not getting triggered for non 200 status codes.
 
