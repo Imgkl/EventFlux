@@ -1,10 +1,13 @@
 
 # Changelog 📝
 
-### 1.7.0
+### 1.7.0 🛠️
 
 - Solves [#12](https://github.com/Imgkl/EventFlux/issues/12)
     - Disposing the instance of stream when `disconnect` method is called.
+- Solves [#13](https://github.com/Imgkl/EventFlux/issues/12)
+    - `onSuccessCallback` should not be called unless 200 is returned
+    - Thanks to [Jan Gruenwaldt](https://github.com/jangruenwaldt) for the PR
 
 ### v1.6.9 🛠️
 - Solves [#11](https://github.com/Imgkl/EventFlux/issues/11)
