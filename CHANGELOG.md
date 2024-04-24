@@ -2,7 +2,6 @@
 # Changelog 📝
 
 ### 1.7.0 🛠️
-
 - Solves [#12](https://github.com/Imgkl/EventFlux/issues/12)
     - Disposing the instance of stream when `disconnect` method is called.
 - Solves [#13](https://github.com/Imgkl/EventFlux/issues/12)
