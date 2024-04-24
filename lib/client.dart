@@ -272,9 +272,15 @@ class EventFlux extends EventFluxBase {
               );
             },
           );
-      onSuccessCallback(EventFluxResponse(
-          status: EventFluxStatus.connected,
-          stream: _streamController!.stream));
+
+      if (data.statusCode == 200) {
+        onSuccessCallback(
+          EventFluxResponse(
+            status: EventFluxStatus.connected,
+            stream: _streamController!.stream,
+          ),
+        );
+      }
     }).catchError((e) async {
       if (onError != null) {
         onError(EventFluxException(message: e.toString()));
