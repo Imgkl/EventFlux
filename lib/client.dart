@@ -412,7 +412,9 @@ class EventFlux extends EventFluxBase {
     /// If autoReconnect is enabled and the user has not explicitly disconnected, it attempts to reconnect.
     if (autoReconnect && !isExplicitDisconnect && _reconnectConfig != null) {
       /// If the reconnection mode is linear, the interval remains constant.
-      if (_reconnectConfig!.mode == ReconnectMode.linear) {
+
+      /// If the maximum attempts is -1, it means there is no limit to the number of attempts.
+      if (_maxAttempts != -1) {
         /// If the maximum attempts are exhausted, it stops the connection.
         if (_maxAttempts == 0) {
           _stop();
@@ -421,57 +423,43 @@ class EventFlux extends EventFluxBase {
 
         /// _maxAttempts is decremented after each attempt.
         _maxAttempts--;
-        eventFluxLog("Trying again in ${_interval.toString()} seconds",
-            LogEvent.reconnect, _tag);
-
-        /// It waits for the specified constant interval before attempting to reconnect.
-        await Future.delayed(_reconnectConfig!.interval, () {
-          _start(type, url,
-              onSuccessCallback: onSuccessCallback,
-              autoReconnect: autoReconnect,
-              onError: onError,
-              header: header,
-              onConnectionClose: onConnectionClose,
-              body: body);
-        });
-
-        /// If a reconnect callback is provided, it is executed.
-        if (_reconnectConfig!.reconnectCallback != null) {
-          _reconnectConfig!.reconnectCallback!();
-        }
       }
 
-      /// If the reconnection mode is exponential, the interval is doubled after each attempt.
-      else {
-        /// If the maximum attempts are exhausted, it stops the connection.
-        if (_maxAttempts == 0) {
-          _stop();
-          return;
-        }
+      switch (_reconnectConfig!.mode) {
+        case ReconnectMode.linear:
+          eventFluxLog("Trying again in ${_interval.toString()} seconds",
+              LogEvent.reconnect, _tag);
 
-        /// _maxAttempts is decremented after each attempt.
-        _maxAttempts--;
+          /// It waits for the specified constant interval before attempting to reconnect.
+          await Future.delayed(_reconnectConfig!.interval, () {
+            _start(type, url,
+                onSuccessCallback: onSuccessCallback,
+                autoReconnect: autoReconnect,
+                onError: onError,
+                header: header,
+                onConnectionClose: onConnectionClose,
+                body: body);
+          });
+        case ReconnectMode.exponential:
+          _interval = _interval * 2;
+          eventFluxLog("Trying again in ${_interval.toString()} seconds",
+              LogEvent.reconnect, _tag);
 
-        /// The interval is doubled after each attempt.
-        _interval = _interval * 2;
-        eventFluxLog("Trying again in ${_interval.toString()} seconds",
-            LogEvent.reconnect, _tag);
+          /// It waits for the specified interval before attempting to reconnect.
+          await Future.delayed(Duration(seconds: _interval), () {
+            _start(type, url,
+                onSuccessCallback: onSuccessCallback,
+                autoReconnect: autoReconnect,
+                onError: onError,
+                header: header,
+                onConnectionClose: onConnectionClose,
+                body: body);
+          });
 
-        /// It waits for the specified interval before attempting to reconnect.
-        await Future.delayed(Duration(seconds: _interval), () {
-          _start(type, url,
-              onSuccessCallback: onSuccessCallback,
-              autoReconnect: autoReconnect,
-              onError: onError,
-              header: header,
-              onConnectionClose: onConnectionClose,
-              body: body);
-        });
-
-        /// If a reconnect callback is provided, it is executed.
-        if (_reconnectConfig!.reconnectCallback != null) {
-          _reconnectConfig!.reconnectCallback!();
-        }
+        /// If a onReconnect is provided, it is executed.
+      }
+      if (_reconnectConfig!.onReconnect != null) {
+        _reconnectConfig!.onReconnect!();
       }
     }
   }
