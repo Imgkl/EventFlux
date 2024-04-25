@@ -71,8 +71,8 @@ void main() {
         mode = ReconnectMode.linear, // or exponential,
         interval = Duration(seconds: 5),
         maxAttempts = 5 // or -1 for infinite,
-        reconnectCallback = () {
-          // Your custom reconnect logic here
+        onReconnect = () {
+          // Things to execute when reconnect happens
         }
     ),
    );
@@ -125,8 +125,8 @@ void main() {
         mode = ReconnectMode.exponential, // or linear,
         interval = Duration(seconds: 5),
         maxAttempts = 5 // or -1 for infinite,
-        reconnectCallback = () {
-          // Your custom reconnect logic here
+        onReconnect = () {
+          // Things to execute when reconnect happens
         }
     ),
   );
