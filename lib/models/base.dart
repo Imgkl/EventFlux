@@ -1,4 +1,5 @@
 import 'package:eventflux/eventflux.dart';
+import 'package:eventflux/models/reconnect.dart';
 
 /// Abstract base class for EventFlux connection management.
 ///
@@ -22,6 +23,10 @@ import 'package:eventflux/eventflux.dart';
 ///       - `header`: Optional HTTP headers for the request. Defaults to accepting
 ///         'text/event-stream'.
 ///       - `body`: Optional body for POST requests.
+///       - `onConnectionClose`: Optional callback function that is called when the connection is closed.
+///       - `autoReconnect`: Optional flag to enable automatic reconnection. Defaults to false.
+///       - `reconnectConfig`: Optional configuration for reconnection attempts. If `autoReconnect` is true, this parameter is required.
+///      -  `tag`: Optional tag to identify the connection.
 ///
 ///   - `disconnect`: Disconnects from the current event stream. This method
 ///     must be implemented by subclasses to properly close any open connections
@@ -46,12 +51,17 @@ import 'package:eventflux/eventflux.dart';
 /// This abstract class is central to ensuring a consistent interface for EventFlux
 /// connection management across different implementations.
 abstract class EventFluxBase {
-  void connect(EventFluxConnectionType type, String url,
-      {required Function(EventFluxResponse?) onSuccessCallback,
-      Map<String, String> header = const {'Accept': 'text/event-stream'},
-      Function()? onConnectionClose,
-      bool autoReconnect = false,
-      Function(EventFluxException)? onError,
-      Map<String, dynamic>? body});
+  void connect(
+    EventFluxConnectionType type,
+    String url, {
+    required Function(EventFluxResponse?) onSuccessCallback,
+    Map<String, String> header = const {'Accept': 'text/event-stream'},
+    Function()? onConnectionClose,
+    bool autoReconnect = false,
+    ReconnectConfig? reconnectConfig,
+    Function(EventFluxException)? onError,
+    Map<String, dynamic>? body,
+    String? tag,
+  });
   Future<EventFluxStatus> disconnect();
 }
