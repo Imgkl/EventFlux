@@ -19,7 +19,7 @@ EventFlux was born from the inspiration I found in the [`flutter_client_sse` pac
 ## Why EventFlux? 🌟
 
 - **Streamlined Connection Handling**: Easy setup for connecting to event streams with support for both GET and POST requests. 🔌
-- **Auto-Reconnect Capability**: Seamlessly maintains your connection, automatically reconnecting in case of any interruptions. Devs can choose do linear or exponential backoff  🔄
+- **Auto-Reconnect Capability**: Seamlessly maintains your connection, automatically reconnecting in case of any interruptions. Devs can choose to do linear or exponential backoff  🔄
 - **Real-Time Data Management**: Efficient processing and handling of real-time data streams. 📈
 - **Error Handling**: Robust mechanisms to manage connection interruptions and stream errors. 🛡️
 - **Versatile Instance Creation**: Offers both singleton and factory patterns for tailored SSE connections. 🌍
