@@ -1,6 +1,14 @@
 
 # Changelog 📝
 
+### v2.0.0 🚀
+#### Breaking
+- Added `ReconnectConfig` class to manage reconnection settings.
+    - Closes [#7](https://github.com/Imgkl/EventFlux/issues/7)
+    - If you are using `autoReconnect` parameter in `connect` method, `reconnectConfig` param is required.
+    - Now you can set backoff strategy, max retries and retry interval.
+    - Check the updated README for more info.
+
 ### 1.7.0 🛠️
 - Solves [#12](https://github.com/Imgkl/EventFlux/issues/12)
     - Disposing the instance of stream when `disconnect` method is called.

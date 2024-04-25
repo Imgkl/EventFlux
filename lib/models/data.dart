@@ -28,7 +28,6 @@
 /// This class provides a structured way to handle and pass around event data
 /// within the EventFlux system, ensuring consistency and ease of access to
 /// different parts of an event's information.
-
 class EventFluxData {
   /// Event ID
   String id = '';

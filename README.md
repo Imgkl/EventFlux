@@ -19,11 +19,12 @@ EventFlux was born from the inspiration I found in the [`flutter_client_sse` pac
 ## Why EventFlux? 🌟
 
 - **Streamlined Connection Handling**: Easy setup for connecting to event streams with support for both GET and POST requests. 🔌
-- **Auto-Reconnect Capability**: Seamlessly maintains your connection, automatically reconnecting in case of any interruptions. 🔄
+- **Auto-Reconnect Capability**: Seamlessly maintains your connection, automatically reconnecting in case of any interruptions. Devs can choose to do linear or exponential backoff  🔄
 - **Real-Time Data Management**: Efficient processing and handling of real-time data streams. 📈
 - **Error Handling**: Robust mechanisms to manage connection interruptions and stream errors. 🛡️
 - **Versatile Instance Creation**: Offers both singleton and factory patterns for tailored SSE connections. 🌍
 - **Customizable**: Extendable to fit various use cases and custom implementations. ✨
+
 
 ## EventFlux for Every Scenario 🌟
 
@@ -35,7 +36,7 @@ Add EventFlux to your Dart project's dependencies, and you're golden:
 
 ```yaml
 dependencies:
-  eventflux: ^1.7.0
+  eventflux: ^2.0.0
 ```
 
 
@@ -66,6 +67,14 @@ void main() {
       // Oops! Time to handle those little hiccups.
     },
     autoReconnect: true // Keep the party going, automatically!
+    reconnectConfig: ReconnectConfig(
+        mode = ReconnectMode.linear, // or exponential,
+        interval = Duration(seconds: 5),
+        maxAttempts = 5 // or -1 for infinite,
+        onReconnect = () {
+          // Things to execute when reconnect happens
+        }
+    ),
    );
 }
 
@@ -112,6 +121,14 @@ void main() {
       // Oops! Time to handle those little hiccups.
       },
     autoReconnect: true // Keep the party going, automatically!
+    reconnectConfig: ReconnectConfig(
+        mode = ReconnectMode.exponential, // or linear,
+        interval = Duration(seconds: 5),
+        maxAttempts = 5 // or -1 for infinite,
+        onReconnect = () {
+          // Things to execute when reconnect happens
+        }
+    ),
   );
 }
 
@@ -125,6 +142,7 @@ void main() {
 ## Need More Info? 📚
 
 - **EventFlux**: Main class for managing event streams.
+- **ReconnectConfig**: Configuration for auto-reconnect.
 - **EventFluxData**: Data model for events received from the stream.
 - **EventFluxException**: Custom exception handling for EventFlux operations.
 - **EventFluxResponse**: Encapsulates the response from EventFlux operations.
@@ -147,6 +165,7 @@ Connects to a server-sent event stream.
 | `header`            | `Map<String, String>`           | HTTP headers for the request.                              | `{'Accept': 'text/event-stream'}` |
 | `onConnectionClose` | `Function()?`                   | Callback function triggered when the connection is closed. | -                                 |
 | `autoReconnect`     | `bool`                          | Whether to automatically reconnect on disconnection.       | `false`                           |
+| `reconnectConfig`   | `ReconnectConfig?`              | Configuration for auto-reconnect. If `auto-reconnect` is true, this is required| -                                 |
 | `onSuccessCallback` | `Function(EventFluxResponse?)`  | Callback invoked upon successful connection.               | -                                 |
 | `onError`           | `Function(EventFluxException)?` | Callback for handling errors.                              | -                                 |
 | `body`              | `Map<String, dynamic>?`         | Optional body for POST request types.                      | -                                 |
