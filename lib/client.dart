@@ -224,7 +224,7 @@ class EventFlux extends EventFluxBase {
       }
 
       if (autoReconnect && data.statusCode != 200) {
-        _reconnectWithDelay(
+        _attemptReconnectIfNeeded(
           _isExplicitDisconnect,
           autoReconnect,
           type,
@@ -289,7 +289,7 @@ class EventFlux extends EventFluxBase {
               /// When the stream is closed, onClose can be called to execute a function.
               if (onConnectionClose != null) onConnectionClose();
 
-              _reconnectWithDelay(
+              _attemptReconnectIfNeeded(
                 _isExplicitDisconnect,
                 autoReconnect,
                 type,
@@ -302,7 +302,6 @@ class EventFlux extends EventFluxBase {
               );
             },
             onError: (error, s) async {
-              await _stop();
               eventFluxLog(
                 'Data Stream Listen Error: ${data.statusCode}: $error ',
                 LogEvent.error,
@@ -314,7 +313,7 @@ class EventFlux extends EventFluxBase {
                 onError(EventFluxException(message: error.toString()));
               }
 
-              _reconnectWithDelay(
+              _attemptReconnectIfNeeded(
                 _isExplicitDisconnect,
                 autoReconnect,
                 type,
@@ -341,7 +340,7 @@ class EventFlux extends EventFluxBase {
         onError(EventFluxException(message: e.toString()));
       }
       await _stop();
-      _reconnectWithDelay(
+      _attemptReconnectIfNeeded(
         _isExplicitDisconnect,
         autoReconnect,
         type,
@@ -396,7 +395,7 @@ class EventFlux extends EventFluxBase {
   /// This method is triggered in case of disconnection, especially
   /// when `autoReconnect` is enabled. It waits for a specified duration (2 seconds),
   /// before attempting to reconnect.
-  void _reconnectWithDelay(
+  void _attemptReconnectIfNeeded(
     /// If _isExplicitDisconnect is `true`, it does not attempt to reconnect. This is to prevent reconnection if the user has explicitly disconnected.
     /// This is an internal variable, this doen't mean anything to the user.
     bool isExplicitDisconnect,

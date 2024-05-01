@@ -19,7 +19,7 @@ EventFlux was born from the inspiration I found in the [`flutter_client_sse` pac
 ## Why EventFlux? 🌟
 
 - **Streamlined Connection Handling**: Easy setup for connecting to event streams with support for both GET and POST requests. 🔌
-- **Auto-Reconnect Capability**: Seamlessly maintains your connection, automatically reconnecting in case of any interruptions. Devs can choose to do linear or exponential backoff  🔄
+- **Auto-Reconnect Capability**: Seamlessly maintains your connection, automatically reconnecting in case of any server interruptions or network changes. Devs can choose to do linear or exponential backoff  🔄
 - **Real-Time Data Management**: Efficient processing and handling of real-time data streams. 📈
 - **Error Handling**: Robust mechanisms to manage connection interruptions and stream errors. 🛡️
 - **Versatile Instance Creation**: Offers both singleton and factory patterns for tailored SSE connections. 🌍
@@ -36,7 +36,7 @@ Add EventFlux to your Dart project's dependencies, and you're golden:
 
 ```yaml
 dependencies:
-  eventflux: ^2.0.0
+  eventflux: ^2.0.1
 ```
 
 
@@ -65,6 +65,7 @@ void main() {
      },
      onError: (oops) {
       // Oops! Time to handle those little hiccups.
+      // You can also choose to disconnect here
     },
     autoReconnect: true // Keep the party going, automatically!
     reconnectConfig: ReconnectConfig(
@@ -105,7 +106,8 @@ void main() {
       });
      },
      onError: (oops) {
-      // Oops! Time to handle those little hiccups.
+        // Oops! Time to handle those little hiccups.
+        // You can also choose to disconnect here
       },
   );
 
@@ -118,7 +120,8 @@ void main() {
       });
      },
      onError: (oops) {
-      // Oops! Time to handle those little hiccups.
+        // Oops! Time to handle those little hiccups.
+        // You can also choose to disconnect here
       },
     autoReconnect: true // Keep the party going, automatically!
     reconnectConfig: ReconnectConfig(

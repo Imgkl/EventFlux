@@ -1,6 +1,10 @@
 
 # Changelog 📝
 
+### v2.0.1 🛠️
+- Solves [#18](https://github.com/Imgkl/EventFlux/issues/18)
+    - Ensures continuous connection even when network availability changes.
+
 ### v2.0.0 🚀
 #### Breaking
 - Added `ReconnectConfig` class to manage reconnection settings.
