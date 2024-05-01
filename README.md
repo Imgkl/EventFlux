@@ -74,6 +74,8 @@ void main() {
         maxAttempts = 5 // or -1 for infinite,
         onReconnect = () {
           // Things to execute when reconnect happens
+          // FYI: for network changes, the `onReconnect` will not be called. 
+          // It will only be called when the connection is interupted by the server and eventflux is trying to reconnect.
         }
     ),
    );
@@ -130,6 +132,8 @@ void main() {
         maxAttempts = 5 // or -1 for infinite,
         onReconnect = () {
           // Things to execute when reconnect happens
+          // FYI: for network changes, the `onReconnect` will not be called. 
+          // It will only be called when the connection is interupted by the server and eventflux is trying to re-establish the connection.
         }
     ),
   );
