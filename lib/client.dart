@@ -283,8 +283,8 @@ class EventFlux extends EventFluxBase {
             },
             cancelOnError: true,
             onDone: () async {
-              await _stop();
               eventFluxLog('Stream Closed', LogEvent.info, _tag);
+              await _stop();
 
               /// When the stream is closed, onClose can be called to execute a function.
               if (onConnectionClose != null) onConnectionClose();
