@@ -30,5 +30,7 @@ library eventflux;
 /// and organized way of accessing its components.
 export 'client.dart';
 export 'enum.dart';
+export 'models/data.dart';
 export 'models/exception.dart';
+export 'models/reconnect.dart';
 export 'models/response.dart';
