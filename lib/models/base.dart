@@ -1,5 +1,4 @@
 import 'package:eventflux/eventflux.dart';
-import 'package:eventflux/models/reconnect.dart';
 
 /// Abstract base class for EventFlux connection management.
 ///
