@@ -130,6 +130,7 @@ class EventFlux extends EventFluxBase {
     Function(EventFluxException)? onError,
     Map<String, dynamic>? body,
     String? tag,
+    bool logReceivedData = false,
   }) {
     /// Set the tag for logging purposes.
     _tag = tag;
@@ -161,6 +162,7 @@ class EventFlux extends EventFluxBase {
       onError: onError,
       onConnectionClose: onConnectionClose,
       body: body,
+      logReceivedData: logReceivedData,
     );
   }
 
@@ -175,6 +177,7 @@ class EventFlux extends EventFluxBase {
     required Function(EventFluxResponse?) onSuccessCallback,
     Function(EventFluxException)? onError,
     Map<String, dynamic>? body,
+    bool logReceivedData = false,
   }) {
     /// Initalise variables
     /// Create a new HTTP client based on the platform
@@ -248,6 +251,13 @@ class EventFlux extends EventFluxBase {
                 /// When the data line is empty, it indicates that the complete event set has been read.
                 /// The event is then added to the stream.
                 _streamController!.add(currentEventFluxData);
+                if (logReceivedData) {
+                  eventFluxLog(
+                    currentEventFluxData.data.toString(),
+                    LogEvent.info,
+                    _tag,
+                  );
+                }
                 currentEventFluxData =
                     EventFluxData(data: '', id: '', event: '');
                 return;

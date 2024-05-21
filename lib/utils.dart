@@ -21,5 +21,6 @@ _getEmoji(LogEvent event) {
 
 /// Logs the given [message] with the corresponding [event] and [tag].
 void eventFluxLog(String message, LogEvent event, String? tag) {
-  log('${_getEmoji(event)} $message', name: tag ?? "EventFlux");
+  log('${_getEmoji(event)} $message',
+      name: tag ?? "EventFlux ${DateTime.now()}");
 }

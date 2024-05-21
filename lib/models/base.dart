@@ -61,6 +61,7 @@ abstract class EventFluxBase {
     Function(EventFluxException)? onError,
     Map<String, dynamic>? body,
     String? tag,
+    bool logReceivedData = false,
   });
   Future<EventFluxStatus> disconnect();
 }
