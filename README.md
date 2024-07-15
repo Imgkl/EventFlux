@@ -71,7 +71,7 @@ void main() {
     reconnectConfig: ReconnectConfig(
         mode = ReconnectMode.linear, // or exponential,
         interval = Duration(seconds: 5),
-        maxAttempts = 5 // or -1 for infinite,
+        maxAttempts = 5, // or -1 for infinite,
         onReconnect = () {
           // Things to execute when reconnect happens
           // FYI: for network changes, the `onReconnect` will not be called. 
@@ -129,7 +129,7 @@ void main() {
     reconnectConfig: ReconnectConfig(
         mode = ReconnectMode.exponential, // or linear,
         interval = Duration(seconds: 5),
-        maxAttempts = 5 // or -1 for infinite,
+        maxAttempts = 5, // or -1 for infinite,
         onReconnect = () {
           // Things to execute when reconnect happens
           // FYI: for network changes, the `onReconnect` will not be called. 
