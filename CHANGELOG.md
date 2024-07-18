@@ -1,6 +1,13 @@
 
 # Changelog 📝
 
+### v2.1.0 🛠️
+- Solves [#18](https://github.com/Imgkl/EventFlux/issues/18)
+    - Ensures continuous connection even when network availability changes. (Again, I know, I know 🥹)
+    - Thanks to [Andrew Abegg](https://github.com/aabegg) for the PR
+- Solves [#19](https://github.com/Imgkl/EventFlux/issues/19)
+    - Fixed README.md file for the example code.
+
 ### v2.0.1 🛠️
 - Solves [#18](https://github.com/Imgkl/EventFlux/issues/18)
     - Ensures continuous connection even when network availability changes.
