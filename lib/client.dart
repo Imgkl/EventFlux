@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:eventflux/enum.dart';
+import 'package:eventflux/http_client_adapter.dart';
 import 'package:eventflux/models/base.dart';
 import 'package:eventflux/models/data.dart';
 import 'package:eventflux/models/exception.dart';
@@ -19,6 +20,7 @@ import 'package:http/http.dart';
 /// It implements the Singleton pattern to ensure a single instance handles SSE streams throughout the application.
 class EventFlux extends EventFluxBase {
   EventFlux._();
+
   static final EventFlux _instance = EventFlux._();
 
   static EventFlux get instance => _instance;
@@ -128,6 +130,7 @@ class EventFlux extends EventFluxBase {
     ReconnectConfig? reconnectConfig,
     required Function(EventFluxResponse?) onSuccessCallback,
     Function(EventFluxException)? onError,
+    HttpClientAdapter? httpClient,
     Map<String, dynamic>? body,
     String? tag,
     bool logReceivedData = false,
@@ -162,6 +165,7 @@ class EventFlux extends EventFluxBase {
       onError: onError,
       onConnectionClose: onConnectionClose,
       body: body,
+      httpClient: httpClient,
       logReceivedData: logReceivedData,
     );
   }
@@ -177,11 +181,15 @@ class EventFlux extends EventFluxBase {
     required Function(EventFluxResponse?) onSuccessCallback,
     Function(EventFluxException)? onError,
     Map<String, dynamic>? body,
+    HttpClientAdapter? httpClient,
     bool logReceivedData = false,
   }) {
     /// Initalise variables
     /// Create a new HTTP client based on the platform
-    _client = Client();
+    /// Uses and internal http client if no http client adapter is present
+    if (httpClient == null) {
+      _client = Client();
+    }
 
     /// Set `_isExplicitDisconnect` to `false` before connecting.
     _isExplicitDisconnect = false;
@@ -203,7 +211,15 @@ class EventFlux extends EventFluxBase {
     }
     eventFluxLog('Connection Initiated', LogEvent.info, _tag);
 
-    Future<StreamedResponse> response = _client!.send(request);
+    Future<StreamedResponse> response;
+
+    if (httpClient != null) {
+      // use external http  client
+      response = httpClient.send(request);
+    } else {
+      // use internal http client
+      response = _client!.send(request);
+    }
 
     response.then((data) async {
       eventFluxLog(
@@ -415,6 +431,7 @@ class EventFlux extends EventFluxBase {
     Function(EventFluxResponse?) onSuccessCallback, {
     Function(EventFluxException)? onError,
     Function()? onConnectionClose,
+    HttpClientAdapter? httpClient,
     Map<String, dynamic>? body,
   }) async {
     /// If autoReconnect is enabled and the user has not explicitly disconnected, it attempts to reconnect.
@@ -446,6 +463,7 @@ class EventFlux extends EventFluxBase {
                 onError: onError,
                 header: header,
                 onConnectionClose: onConnectionClose,
+                httpClient: httpClient,
                 body: body);
           });
         case ReconnectMode.exponential:
@@ -461,6 +479,7 @@ class EventFlux extends EventFluxBase {
                 onError: onError,
                 header: header,
                 onConnectionClose: onConnectionClose,
+                httpClient: httpClient,
                 body: body);
           });
 
