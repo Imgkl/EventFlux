@@ -252,6 +252,7 @@ class EventFlux extends EventFluxBase {
           onSuccessCallback,
           onError: onError,
           onConnectionClose: onConnectionClose,
+          httpClient: httpClient,
           body: body,
         );
         return;
@@ -324,6 +325,7 @@ class EventFlux extends EventFluxBase {
                 onSuccessCallback,
                 onError: onError,
                 onConnectionClose: onConnectionClose,
+                httpClient: httpClient,
                 body: body,
               );
             },
@@ -348,6 +350,7 @@ class EventFlux extends EventFluxBase {
                 onSuccessCallback,
                 onError: onError,
                 onConnectionClose: onConnectionClose,
+                httpClient: httpClient,
                 body: body,
               );
             },
@@ -375,6 +378,7 @@ class EventFlux extends EventFluxBase {
         onSuccessCallback,
         onError: onError,
         onConnectionClose: onConnectionClose,
+        httpClient: httpClient,
         body: body,
       );
     });
