@@ -10,11 +10,13 @@ class ReconnectConfig {
   final Duration interval;
   final Function()? onReconnect;
   final int maxAttempts;
+  final Map<String, String>? reconnectHeader;
 
   ReconnectConfig({
     required this.mode,
     this.interval = const Duration(seconds: 2),
     this.maxAttempts = 5,
+    this.reconnectHeader,
     this.onReconnect,
   });
 }
