@@ -36,7 +36,7 @@ Add EventFlux to your Dart project's dependencies, and you're golden:
 
 ```yaml
 dependencies:
-  eventflux: ^2.1.0
+  eventflux: ^2.1.1
 ```
 
 
@@ -71,6 +71,10 @@ void main() {
     reconnectConfig: ReconnectConfig(
         mode: ReconnectMode.linear, // or exponential,
         interval: Duration(seconds: 5),
+        reconnectHeaders: {
+          /// If you want to send custom headers during reconnect which are different from the initial connection
+          /// If you don't want to send any headers, you can skip this, initial headers will be used 
+        }
         maxAttempts: 5, // or -1 for infinite,
         onReconnect: () {
           // Things to execute when reconnect happens
@@ -130,6 +134,10 @@ void main() {
         mode: ReconnectMode.exponential, // or linear,
         interval: Duration(seconds: 5),
         maxAttempts: 5, // or -1 for infinite,
+         reconnectHeaders: {
+          /// If you want to send custom headers during reconnect which are different from the initial connection
+          /// If you don't want to send any headers, you can skip this, initial headers will be used 
+        }
         onReconnect: () {
           // Things to execute when reconnect happens
           // FYI: for network changes, the `onReconnect` will not be called. 

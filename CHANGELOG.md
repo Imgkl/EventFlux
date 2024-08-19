@@ -1,10 +1,20 @@
 
 # Changelog 📝
 
+
+### v2.1.1 🚀
+- Added `reconnectHeaders` parameter in `ReconnectConfig` class.
+    - If you want to send custom headers during reconnect which are different from the initial connection, you can use this parameter.
+    - If you don't want to send any headers, you can skip this, initial headers will be used.
+    - Refer README example for more info
+- Added Http Client Adapter to allow usage of different http clients
+    - Thanks to [jcarvalho-ptech](https://github.com/jcarvalho-ptech) for the [PR](https://github.com/Imgkl/EventFlux/pull/26)
+- Updated Http package version to `1.2.2`
+
 ### v2.1.0 🛠️
 - Solves [#18](https://github.com/Imgkl/EventFlux/issues/18)
     - Ensures continuous connection even when network availability changes. (Again, I know, I know 🥹)
-    - Thanks to [Andrew Abegg](https://github.com/aabegg) for the PR
+    - Thanks to [Andrew Abegg](https://github.com/aabegg) for the [PR](https://github.com/Imgkl/EventFlux/pull/23)
 - Solves [#19](https://github.com/Imgkl/EventFlux/issues/19)
     - Fixed README.md file for the example code.
 
@@ -25,7 +35,7 @@
     - Disposing the instance of stream when `disconnect` method is called.
 - Solves [#13](https://github.com/Imgkl/EventFlux/issues/12)
     - `onSuccessCallback` should not be called unless 200 is returned
-    - Thanks to [Jan Gruenwaldt](https://github.com/jangruenwaldt) for the PR
+    - Thanks to [Jan Gruenwaldt](https://github.com/jangruenwaldt) for the [PR](https://github.com/Imgkl/EventFlux/pull/16)
 
 ### v1.6.9 🛠️
 - Solves [#11](https://github.com/Imgkl/EventFlux/issues/11)
