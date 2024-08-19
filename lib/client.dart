@@ -465,7 +465,7 @@ class EventFlux extends EventFluxBase {
                 onSuccessCallback: onSuccessCallback,
                 autoReconnect: autoReconnect,
                 onError: onError,
-                header: header,
+                header: _reconnectConfig!.reconnectHeader ?? header,
                 onConnectionClose: onConnectionClose,
                 httpClient: httpClient,
                 body: body);
@@ -481,7 +481,7 @@ class EventFlux extends EventFluxBase {
                 onSuccessCallback: onSuccessCallback,
                 autoReconnect: autoReconnect,
                 onError: onError,
-                header: header,
+                header: _reconnectConfig!.reconnectHeader ?? header,
                 onConnectionClose: onConnectionClose,
                 httpClient: httpClient,
                 body: body);
