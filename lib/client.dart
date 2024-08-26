@@ -235,11 +235,26 @@ class EventFlux extends EventFluxBase {
       );
 
       if (data.statusCode < 200 || data.statusCode >= 300) {
+        String responseBody = await data.stream.bytesToString();
         if (onError != null) {
-          onError(EventFluxException(
-              message:
-                  'Connection Error Status:${data.statusCode}, Connection Error Reason: ${data.reasonPhrase}'));
+          Map<String, dynamic>? errorDetails;
+          try {
+            errorDetails = jsonDecode(responseBody);
+          } catch (e) {
+            errorDetails = {'rawBody': responseBody};
+          }
+
+          onError(
+            EventFluxException(
+              statusCode: data.statusCode,
+              reasonPhrase: data.reasonPhrase,
+              message: errorDetails.toString().isEmpty
+                  ? data.reasonPhrase
+                  : errorDetails.toString(),
+            ),
+          );
         }
+        return;
       }
 
       if (autoReconnect && data.statusCode != 200) {
@@ -338,7 +353,11 @@ class EventFlux extends EventFluxBase {
 
               /// Executes the onError function if it is not null
               if (onError != null) {
-                onError(EventFluxException(message: error.toString()));
+                onError(EventFluxException(
+                  message: error.toString(),
+                  statusCode: data.statusCode,
+                  reasonPhrase: data.reasonPhrase,
+                ));
               }
 
               _attemptReconnectIfNeeded(

@@ -31,9 +31,13 @@
 /// This class allows for more specific exception handling for EventFlux-related
 /// operations, making it easier to diagnose and respond to issues.
 class EventFluxException implements Exception {
-  final Object message;
+  final String? message;
+  final int? statusCode;
+  final String? reasonPhrase;
 
   EventFluxException({
-    required this.message,
+    this.message,
+    this.statusCode,
+    this.reasonPhrase,
   });
 }
