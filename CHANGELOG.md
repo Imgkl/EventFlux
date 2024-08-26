@@ -3,7 +3,7 @@
 
 ### v2.1.2 🛠️
 - Solves [#25](https://github.com/Imgkl/EventFlux/issues/25)
-    - On error, returns the json response in the error message.
+    - The `onError` method now includes the JSON response from the backend in the error message, if the backend sends a JSON response to the frontend.
 
 ### v2.1.1 🚀
 - Added `reconnectHeaders` parameter in `ReconnectConfig` class.
