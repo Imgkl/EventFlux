@@ -10,7 +10,7 @@ class ReconnectConfig {
   final Duration interval;
   final Function()? onReconnect;
   final int maxAttempts;
-  final Map<String, String>? reconnectHeader;
+  final Future<Map<String, String>> Function()? reconnectHeader;
 
   ReconnectConfig({
     required this.mode,

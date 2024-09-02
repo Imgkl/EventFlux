@@ -1,6 +1,12 @@
 
 # Changelog 📝
 
+
+### v2.2.0 🛠️
+- Solves [#29](https://github.com/Imgkl/EventFlux/issues/29)
+    - Reconnect headers are now async. You can use async functions to fetch new headers, but make sure to return a `Map<String, String>` from the function.
+    - Refer README example for more info.
+
 ### v2.1.2 🛠️
 - Solves [#25](https://github.com/Imgkl/EventFlux/issues/25)
     - The `onError` method now includes the JSON response from the backend in the error message, if the backend sends a JSON response to the frontend.

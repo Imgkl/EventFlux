@@ -473,6 +473,10 @@ class EventFlux extends EventFluxBase {
         _maxAttempts--;
       }
 
+      if (_reconnectConfig!.reconnectHeader != null) {
+        header = await _reconnectConfig!.reconnectHeader!();
+      }
+
       switch (_reconnectConfig!.mode) {
         case ReconnectMode.linear:
           eventFluxLog("Trying again in ${_interval.toString()} seconds",
@@ -484,7 +488,7 @@ class EventFlux extends EventFluxBase {
                 onSuccessCallback: onSuccessCallback,
                 autoReconnect: autoReconnect,
                 onError: onError,
-                header: _reconnectConfig!.reconnectHeader ?? header,
+                header: header,
                 onConnectionClose: onConnectionClose,
                 httpClient: httpClient,
                 body: body);
@@ -500,7 +504,7 @@ class EventFlux extends EventFluxBase {
                 onSuccessCallback: onSuccessCallback,
                 autoReconnect: autoReconnect,
                 onError: onError,
-                header: _reconnectConfig!.reconnectHeader ?? header,
+                header: header,
                 onConnectionClose: onConnectionClose,
                 httpClient: httpClient,
                 body: body);

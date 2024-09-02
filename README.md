@@ -36,7 +36,7 @@ Add EventFlux to your Dart project's dependencies, and you're golden:
 
 ```yaml
 dependencies:
-  eventflux: ^2.1.1
+  eventflux: ^2.2.0
 ```
 
 
@@ -71,10 +71,18 @@ void main() {
     reconnectConfig: ReconnectConfig(
         mode: ReconnectMode.linear, // or exponential,
         interval: Duration(seconds: 5),
-        reconnectHeaders: {
+        reconnectHeader: () async {
           /// If you want to send custom headers during reconnect which are different from the initial connection
           /// If you don't want to send any headers, you can skip this, initial headers will be used 
-        }
+
+          // Your async code to refresh or fetch headers
+          // For example, fetching a new access token:
+          String newAccessToken = await fetchNewAccessToken();
+          return {
+            'Authorization': 'Bearer $newAccessToken',
+            'Accept': 'text/event-stream',
+          };
+        },
         maxAttempts: 5, // or -1 for infinite,
         onReconnect: () {
           // Things to execute when reconnect happens
@@ -106,6 +114,7 @@ void main() {
    // First connection - firing up!
   e1.connect(EventFluxConnectionType.get, 
      'https://example1.com/events',
+     tag: "SSE Connection 1", // Optional tag for debugging, you'll see this in logs
      onSuccessCallback: (EventFluxResponse? data) {
        data.stream?.listen((data) {
         // Your 1st Stream's data is being fetched!
@@ -120,6 +129,7 @@ void main() {
    // Second connection - firing up!
    e2.connect(EventFluxConnectionType.get,
      'https://example2.com/events',
+     tag: "SSE Connection 2", // Optional tag for debugging, you'll see this in logs
      onSuccessCallback: (EventFluxResponse? data) {
        data.stream?.listen((data) {
         // Your 2nd Stream's data is also being fetched!
@@ -134,10 +144,18 @@ void main() {
         mode: ReconnectMode.exponential, // or linear,
         interval: Duration(seconds: 5),
         maxAttempts: 5, // or -1 for infinite,
-         reconnectHeaders: {
+        reconnectHeader: () async {
           /// If you want to send custom headers during reconnect which are different from the initial connection
           /// If you don't want to send any headers, you can skip this, initial headers will be used 
-        }
+
+          // Your async code to refresh or fetch headers
+          // For example, fetching a new access token:
+          String newAccessToken = await fetchNewAccessToken();
+          return {
+            'Authorization': 'Bearer $newAccessToken',
+            'Accept': 'text/event-stream',
+          };
+        },
         onReconnect: () {
           // Things to execute when reconnect happens
           // FYI: for network changes, the `onReconnect` will not be called. 
