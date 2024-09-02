@@ -473,6 +473,7 @@ class EventFlux extends EventFluxBase {
         _maxAttempts--;
       }
 
+      // If a reconnectHeader is provided, it is executed to get the header.
       if (_reconnectConfig!.reconnectHeader != null) {
         header = await _reconnectConfig!.reconnectHeader!();
       }
