@@ -134,6 +134,8 @@ class EventFlux extends EventFluxBase {
     Map<String, dynamic>? body,
     String? tag,
     bool logReceivedData = false,
+    List<MultipartFile>? files,
+    bool multipartRequest = false,
   }) {
     /// Set the tag for logging purposes.
     _tag = tag;
@@ -167,6 +169,8 @@ class EventFlux extends EventFluxBase {
       body: body,
       httpClient: httpClient,
       logReceivedData: logReceivedData,
+      files: files,
+      multipartRequest: multipartRequest,
     );
   }
 
@@ -183,6 +187,8 @@ class EventFlux extends EventFluxBase {
     Map<String, dynamic>? body,
     HttpClientAdapter? httpClient,
     bool logReceivedData = false,
+    List<MultipartFile>? files,
+    bool multipartRequest = false,
   }) {
     /// Initalise variables
     /// Create a new HTTP client based on the platform
@@ -199,16 +205,44 @@ class EventFlux extends EventFluxBase {
     EventFluxData currentEventFluxData =
         EventFluxData(data: '', id: '', event: '');
 
-    Request request = Request(
-      type == EventFluxConnectionType.get ? 'GET' : 'POST',
-      Uri.parse(url),
-    );
-    if (header.isNotEmpty) {
-      request.headers.addAll(header);
-    }
-    if (body != null) {
-      request.body = jsonEncode(body);
-    }
+    BaseRequest request = switch ((multipartRequest, files?.isNotEmpty)) {
+      (true, _) || (_, true) => () {
+          final request = MultipartRequest(
+            type == EventFluxConnectionType.get ? 'GET' : 'POST',
+            Uri.parse(url),
+          );
+          if (header.isNotEmpty) {
+            request.headers.addAll(header);
+          }
+          if (body != null) {
+            request.fields.addAll(
+              body.map(
+                (key, value) => MapEntry(key, value),
+              ),
+            );
+          }
+          if (files != null) {
+            for (final file in files) {
+              request.files.add(file);
+            }
+          }
+          return request;
+        }(),
+      _ => () {
+          final request = Request(
+            type == EventFluxConnectionType.get ? 'GET' : 'POST',
+            Uri.parse(url),
+          );
+          if (header.isNotEmpty) {
+            request.headers.addAll(header);
+          }
+          if (body != null) {
+            request.body = jsonEncode(body);
+          }
+          return request;
+        }(),
+    };
+
     eventFluxLog('Connection Initiated', LogEvent.info, _tag);
 
     Future<StreamedResponse> response;
@@ -269,6 +303,8 @@ class EventFlux extends EventFluxBase {
           onConnectionClose: onConnectionClose,
           httpClient: httpClient,
           body: body,
+          files: files,
+          multipartRequest: multipartRequest,
         );
         return;
       }
@@ -342,6 +378,8 @@ class EventFlux extends EventFluxBase {
                 onConnectionClose: onConnectionClose,
                 httpClient: httpClient,
                 body: body,
+                files: files,
+                multipartRequest: multipartRequest,
               );
             },
             onError: (error, s) async {
@@ -371,6 +409,8 @@ class EventFlux extends EventFluxBase {
                 onConnectionClose: onConnectionClose,
                 httpClient: httpClient,
                 body: body,
+                files: files,
+                multipartRequest: multipartRequest,
               );
             },
           );
@@ -399,6 +439,8 @@ class EventFlux extends EventFluxBase {
         onConnectionClose: onConnectionClose,
         httpClient: httpClient,
         body: body,
+        files: files,
+        multipartRequest: multipartRequest,
       );
     });
   }
@@ -456,6 +498,8 @@ class EventFlux extends EventFluxBase {
     Function()? onConnectionClose,
     HttpClientAdapter? httpClient,
     Map<String, dynamic>? body,
+    List<MultipartFile>? files,
+    bool multipartRequest = false,
   }) async {
     /// If autoReconnect is enabled and the user has not explicitly disconnected, it attempts to reconnect.
     if (autoReconnect && !isExplicitDisconnect && _reconnectConfig != null) {
@@ -485,14 +529,19 @@ class EventFlux extends EventFluxBase {
 
           /// It waits for the specified constant interval before attempting to reconnect.
           await Future.delayed(_reconnectConfig!.interval, () {
-            _start(type, url,
-                onSuccessCallback: onSuccessCallback,
-                autoReconnect: autoReconnect,
-                onError: onError,
-                header: header,
-                onConnectionClose: onConnectionClose,
-                httpClient: httpClient,
-                body: body);
+            _start(
+              type,
+              url,
+              onSuccessCallback: onSuccessCallback,
+              autoReconnect: autoReconnect,
+              onError: onError,
+              header: header,
+              onConnectionClose: onConnectionClose,
+              httpClient: httpClient,
+              body: body,
+              files: files,
+              multipartRequest: multipartRequest,
+            );
           });
         case ReconnectMode.exponential:
           _interval = _interval * 2;
@@ -501,14 +550,19 @@ class EventFlux extends EventFluxBase {
 
           /// It waits for the specified interval before attempting to reconnect.
           await Future.delayed(Duration(seconds: _interval), () {
-            _start(type, url,
-                onSuccessCallback: onSuccessCallback,
-                autoReconnect: autoReconnect,
-                onError: onError,
-                header: header,
-                onConnectionClose: onConnectionClose,
-                httpClient: httpClient,
-                body: body);
+            _start(
+              type,
+              url,
+              onSuccessCallback: onSuccessCallback,
+              autoReconnect: autoReconnect,
+              onError: onError,
+              header: header,
+              onConnectionClose: onConnectionClose,
+              httpClient: httpClient,
+              body: body,
+              files: files,
+              multipartRequest: multipartRequest,
+            );
           });
 
         /// If a onReconnect is provided, it is executed.
