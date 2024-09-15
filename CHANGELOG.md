@@ -1,6 +1,11 @@
 
 # Changelog 📝
 
+### v2.2.1 🚀
+- Added Multipart/files support
+    - Now you can send multipart/files data to the server.
+    - Thanks to [Pedro](https://github.com/pedrohsampaioo) for the [PR](https://github.com/Imgkl/EventFlux/pull/31)
+    - Refer README example for more info.
 
 ### v2.2.0 🛠️
 - Solves [#29](https://github.com/Imgkl/EventFlux/issues/29)

@@ -36,7 +36,7 @@ Add EventFlux to your Dart project's dependencies, and you're golden:
 
 ```yaml
 dependencies:
-  eventflux: ^2.2.0
+  eventflux: ^2.2.1
 ```
 
 
@@ -58,6 +58,10 @@ void main() {
    EventFlux.instance.connect(
      EventFluxConnectionType.get,
      'https://example.com/events',
+     files: [
+      /// Optional, If you want to send multipart files with the request
+     ],
+     multipartRequest: true, // Optional, By default, it will be considered as normal request, but if the files are provided or this flag is true, it will be considered as multipart request
      onSuccessCallback: (EventFluxResponse? response) {
       response.stream?.listen((data) {
         // Your data is now in the spotlight!
@@ -202,6 +206,11 @@ Connects to a server-sent event stream.
 | `onSuccessCallback` | `Function(EventFluxResponse?)`  | Callback invoked upon successful connection.               | -                                 |
 | `onError`           | `Function(EventFluxException)?` | Callback for handling errors.                              | -                                 |
 | `body`              | `Map<String, dynamic>?`         | Optional body for POST request types.                      | -                                 |
+| `files`             | `List<File>?`                   | Optional list of files to send with the request.           | -                                 |
+| `multipartRequest`  | `bool`                          | Whether the request is a multipart request.                | `false`                           |
+| `tag`               | `String`                        | Optional tag for debugging.                                | -                                 |
+| `logReceivedData`  | `bool`                          | Whether to log received data.                              | `false`                           |
+| `httpClient`        | `HttpClientAdapter?`            | Optional Http Client Adapter to allow usage of different http clients. | -                                 |
 
 &nbsp;<br>
 </details>

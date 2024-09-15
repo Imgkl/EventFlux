@@ -78,6 +78,10 @@ class EventFlux extends EventFluxBase {
   ///     or data streaming process. It receives an `EventFluxException` object.
   ///   - `body`: Optional body for POST request types.
   ///   - `tag`: Optional tag to identify the connection.
+  ///   - `logReceivedData`: Boolean value that determines if received data should be logged. Defaults to `false`.
+  ///   - `files`: Optional list of files to be sent with the request.
+  ///   - `multipartRequest`: Boolean value that determines if the request is a multipart request. Defaults to `false`.
+  ///   - `httpClient`: Optional HTTP client adapter to be used for the connection.
   ///
   ///
   /// The method initializes an HTTP client and a StreamController for managing the SSE data.
