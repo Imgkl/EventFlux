@@ -36,7 +36,7 @@ Add EventFlux to your Dart project's dependencies, and you're golden:
 
 ```yaml
 dependencies:
-  eventflux: ^2.2.1
+  eventflux: ^2.2.2-dev.2
 ```
 
 
