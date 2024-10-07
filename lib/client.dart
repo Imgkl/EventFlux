@@ -580,29 +580,25 @@ class EventFlux extends EventFluxBase {
           break;
 
         case ReconnectMode.exponential:
+          _interval = _interval * 2;
+          eventFluxLog("Trying again in ${_interval.toString()} seconds",
+              LogEvent.reconnect, _tag);
 
           /// It waits for the specified interval before attempting to reconnect.
           await Future.delayed(Duration(seconds: _interval), () {
-            _interval = _interval * 2;
-            if (!isExplicitDisconnect) {
-              eventFluxLog("Trying again in ${_interval.toString()} seconds",
-                  LogEvent.reconnect, _tag);
-
-              _status = EventFluxStatus.connectionInitiated;
-              _start(
-                type,
-                url,
-                onSuccessCallback: onSuccessCallback,
-                autoReconnect: autoReconnect,
-                onError: onError,
-                header: header,
-                onConnectionClose: onConnectionClose,
-                httpClient: httpClient,
-                body: body,
-                files: files,
-                multipartRequest: multipartRequest,
-              );
-            }
+            _start(
+              type,
+              url,
+              onSuccessCallback: onSuccessCallback,
+              autoReconnect: autoReconnect,
+              onError: onError,
+              header: header,
+              onConnectionClose: onConnectionClose,
+              httpClient: httpClient,
+              body: body,
+              files: files,
+              multipartRequest: multipartRequest,
+            );
           });
           break;
       }
