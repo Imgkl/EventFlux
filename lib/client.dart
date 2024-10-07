@@ -580,10 +580,10 @@ class EventFlux extends EventFluxBase {
           break;
 
         case ReconnectMode.exponential:
+          _interval = _interval * 2;
 
           /// It waits for the specified interval before attempting to reconnect.
           await Future.delayed(Duration(seconds: _interval), () {
-            _interval = _interval * 2;
             if (!isExplicitDisconnect) {
               eventFluxLog("Trying again in ${_interval.toString()} seconds",
                   LogEvent.reconnect, _tag);
