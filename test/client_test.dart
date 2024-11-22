@@ -63,6 +63,74 @@ void main() {
           });
         });
 
+        group('sets url', () {
+          final response = StreamedResponse(
+            Stream.value([]),
+            200,
+            headers: {'content-type': 'text/event-stream'},
+          );
+          final testUri = Uri.parse(testUrl);
+
+          test('to request', () {
+            when(mockHttpClient.send(any))
+                .thenAnswer((_) => Future.value(response));
+
+            fakeAsync((async) {
+              eventFlux.connect(
+                connectionType,
+                testUri.toString(),
+                httpClient: mockHttpClient,
+                onSuccessCallback: (_) {},
+              );
+              async.flushMicrotasks();
+            });
+
+            final call = verify(mockHttpClient.send(captureAny))..called(1);
+            final request = call.captured.single as Request;
+            expect(request.url, testUri);
+          });
+
+          test('to multipart request', () {
+            when(mockHttpClient.send(any))
+                .thenAnswer((_) => Future.value(response));
+
+            fakeAsync((async) {
+              eventFlux.connect(
+                connectionType,
+                testUri.toString(),
+                httpClient: mockHttpClient,
+                multipartRequest: true,
+                onSuccessCallback: (_) {},
+              );
+              async.flushMicrotasks();
+            });
+
+            final call = verify(mockHttpClient.send(captureAny))..called(1);
+            final request = call.captured.single as MultipartRequest;
+            expect(request.url, testUri);
+          });
+
+          test('to multipart request with files', () {
+            when(mockHttpClient.send(any))
+                .thenAnswer((_) => Future.value(response));
+
+            fakeAsync((async) {
+              eventFlux.connect(
+                connectionType,
+                testUri.toString(),
+                httpClient: mockHttpClient,
+                files: [MultipartFile.fromString('test', 'test')],
+                onSuccessCallback: (_) {},
+              );
+              async.flushMicrotasks();
+            });
+
+            final call = verify(mockHttpClient.send(captureAny))..called(1);
+            final request = call.captured.single as MultipartRequest;
+            expect(request.url, testUri);
+          });
+        });
+
         group('adds headers', () {
           final response = StreamedResponse(
             Stream.value([]),
@@ -155,12 +223,12 @@ void main() {
                 onSuccessCallback: (_) {},
               );
               async.flushMicrotasks();
+            });
 
-              final call = verify(mockHttpClient.send(captureAny))..called(1);
-              final request = call.captured.single as Request;
-              expect(request.headers, {
-                'Accept': 'text/event-stream',
-              });
+            final call = verify(mockHttpClient.send(captureAny))..called(1);
+            final request = call.captured.single as Request;
+            expect(request.headers, {
+              'Accept': 'text/event-stream',
             });
           });
 
@@ -177,12 +245,12 @@ void main() {
                 onSuccessCallback: (_) {},
               );
               async.flushMicrotasks();
+            });
 
-              final call = verify(mockHttpClient.send(captureAny))..called(1);
-              final request = call.captured.single as MultipartRequest;
-              expect(request.headers, {
-                'Accept': 'text/event-stream',
-              });
+            final call = verify(mockHttpClient.send(captureAny))..called(1);
+            final request = call.captured.single as MultipartRequest;
+            expect(request.headers, {
+              'Accept': 'text/event-stream',
             });
           });
 
@@ -199,12 +267,12 @@ void main() {
                 onSuccessCallback: (_) {},
               );
               async.flushMicrotasks();
+            });
 
-              final call = verify(mockHttpClient.send(captureAny))..called(1);
-              final request = call.captured.single as MultipartRequest;
-              expect(request.headers, {
-                'Accept': 'text/event-stream',
-              });
+            final call = verify(mockHttpClient.send(captureAny))..called(1);
+            final request = call.captured.single as MultipartRequest;
+            expect(request.headers, {
+              'Accept': 'text/event-stream',
             });
           });
         });
@@ -487,12 +555,12 @@ void main() {
               },
             );
             async.flushMicrotasks();
-
-            expect(eventFluxResponse?.status, EventFluxStatus.connected);
-            final call = verify(mockHttpClient.send(captureAny))..called(1);
-            final request = call.captured.single as MultipartRequest;
-            expect(request.files.single, multipartFile);
           });
+
+          expect(eventFluxResponse?.status, EventFluxStatus.connected);
+          final call = verify(mockHttpClient.send(captureAny))..called(1);
+          final request = call.captured.single as MultipartRequest;
+          expect(request.files.single, multipartFile);
         });
 
         test('sends MultipartRequest with fields', () {
@@ -520,12 +588,12 @@ void main() {
               },
             );
             async.flushMicrotasks();
-
-            expect(eventFluxResponse?.status, EventFluxStatus.connected);
-            final call = verify(mockHttpClient.send(captureAny))..called(1);
-            final request = call.captured.single as MultipartRequest;
-            expect(request.fields, body);
           });
+
+          expect(eventFluxResponse?.status, EventFluxStatus.connected);
+          final call = verify(mockHttpClient.send(captureAny))..called(1);
+          final request = call.captured.single as MultipartRequest;
+          expect(request.fields, body);
         });
       });
     }
