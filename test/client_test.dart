@@ -20,6 +20,42 @@ void main() {
   });
 
   group('EventFlux', () {
+    test('connect with GET', () {
+      final response = StreamedResponse(Stream.value([]), 200);
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
+
+      fakeAsync((async) {
+        eventFlux.connect(
+          EventFluxConnectionType.get,
+          testUrl,
+          httpClient: mockHttpClient,
+          onSuccessCallback: (_) {},
+        );
+      });
+
+      final call = verify(mockHttpClient.send(captureAny))..called(1);
+      final request = call.captured.single as Request;
+      expect(request.method, 'GET');
+    });
+
+    test('connect with POST', () {
+      final response = StreamedResponse(Stream.value([]), 200);
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
+
+      fakeAsync((async) {
+        eventFlux.connect(
+          EventFluxConnectionType.post,
+          testUrl,
+          httpClient: mockHttpClient,
+          onSuccessCallback: (_) {},
+        );
+      });
+
+      final call = verify(mockHttpClient.send(captureAny))..called(1);
+      final request = call.captured.single as Request;
+      expect(request.method, 'POST');
+    });
+
     for (var connectionType in EventFluxConnectionType.values) {
       group('connect with $connectionType', () {
         test(
