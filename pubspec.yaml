@@ -22,8 +22,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.2
-
-flutter:
+  mockito: ^5.4.4
+  build_runner: ^2.4.13
+  test: ^1.25.7
+  fake_async: ^1.3.1
 
 platforms:
   android:
@@ -31,28 +33,3 @@ platforms:
   macos:
   linux:
   windows:
-
-
-  
-  
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
