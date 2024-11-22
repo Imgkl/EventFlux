@@ -12,6 +12,8 @@ import 'package:eventflux/models/exception.dart';
 import 'package:eventflux/models/reconnect.dart';
 import 'package:eventflux/models/response.dart';
 import 'package:eventflux/utils.dart';
+import 'package:fetch_client/fetch_client.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 
 /// A class for managing event-driven data streams using Server-Sent Events (SSE).
@@ -24,7 +26,8 @@ class EventFlux extends EventFluxBase {
   static final EventFlux _instance = EventFlux._();
 
   static EventFlux get instance => _instance;
-  Client? _client;
+  @visibleForTesting
+  Client? client;
   StreamController<EventFluxData>? _streamController;
   bool _isExplicitDisconnect = false;
   StreamSubscription? _streamSubscription;
@@ -214,7 +217,7 @@ class EventFlux extends EventFluxBase {
     /// Create a new HTTP client based on the platform
     /// Uses and internal http client if no http client adapter is present
     if (httpClient == null) {
-      _client = Client();
+      client = kIsWeb ? FetchClient() : Client();
     }
 
     /// Set `_isExplicitDisconnect` to `false` before connecting.
@@ -272,7 +275,7 @@ class EventFlux extends EventFluxBase {
       response = httpClient.send(request);
     } else {
       // Use internal HTTP client
-      response = _client!.send(request);
+      response = client!.send(request);
     }
 
     response.then((data) async {
@@ -494,7 +497,7 @@ class EventFlux extends EventFluxBase {
     try {
       _streamSubscription?.cancel();
       _streamController?.close();
-      _client?.close();
+      client?.close();
       Future.delayed(const Duration(seconds: 1), () {});
       eventFluxLog('Disconnected', LogEvent.info, _tag);
       _status = EventFluxStatus.disconnected;
