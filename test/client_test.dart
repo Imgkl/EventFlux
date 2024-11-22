@@ -24,7 +24,7 @@ void main() {
       group('connect with $connectionType', () {
         test(
             'calls onSuccessCallback with connected status and streams response data',
-            () async {
+            () {
           final controller = StreamController<List<int>>();
           final response = StreamedResponse(
             controller.stream,
@@ -63,7 +63,7 @@ void main() {
           });
         });
 
-        test('error response calls onError callback', () async {
+        test('error response calls onError callback', () {
           final response = StreamedResponse(
             Stream.value([]),
             404,
@@ -93,7 +93,7 @@ void main() {
           });
         });
 
-        test('reconnects with autoReconnect: true for linear mode', () async {
+        test('reconnects with autoReconnect: true for linear mode', () {
           final controller = StreamController<List<int>>();
           final controller2 = StreamController<List<int>>();
           final response = StreamedResponse(
@@ -144,8 +144,7 @@ void main() {
           });
         });
 
-        test('reconnects with autoReconnect: true for exponential mode',
-            () async {
+        test('reconnects with autoReconnect: true for exponential mode', () {
           final controller = StreamController<List<int>>();
           final controller2 = StreamController<List<int>>();
           final response = StreamedResponse(
@@ -196,8 +195,7 @@ void main() {
           });
         });
 
-        test('tries reconnection in linear intervals for linear mode',
-            () async {
+        test('tries reconnection in linear intervals for linear mode', () {
           final controller = StreamController<List<int>>();
           final response = StreamedResponse(
             controller.stream,
@@ -238,7 +236,7 @@ void main() {
         });
 
         test('tries reconnection in exponential intervals for exponential mode',
-            () async {
+            () {
           final controller = StreamController<List<int>>();
           final response = StreamedResponse(
             controller.stream,
@@ -280,7 +278,7 @@ void main() {
         });
       });
 
-      test('sends MultipartRequest with files and fields', () async {
+      test('sends MultipartRequest with files and fields', () {
         final controller = StreamController<List<int>>();
         final response = StreamedResponse(
           controller.stream,
@@ -319,7 +317,7 @@ void main() {
         });
       });
 
-      test('sends multipart request with files', () async {
+      test('sends multipart request with files', () {
         final controller = StreamController<List<int>>();
         final response = StreamedResponse(
           controller.stream,
@@ -352,7 +350,7 @@ void main() {
         });
       });
 
-      test('sends MultipartRequest with fields', () async {
+      test('sends MultipartRequest with fields', () {
         final controller = StreamController<List<int>>();
         final response = StreamedResponse(
           controller.stream,
@@ -387,8 +385,7 @@ void main() {
     }
 
     group('disconnect', () {
-      test('explicit disconnect prevents reconnection for linear mode',
-          () async {
+      test('explicit disconnect prevents reconnection for linear mode', () {
         final controller = StreamController<List<int>>();
         final response = StreamedResponse(
           controller.stream,
@@ -426,7 +423,7 @@ void main() {
       });
 
       test('explicit disconnect prevents reconnection for exponential mode',
-          () async {
+          () {
         final controller = StreamController<List<int>>();
         final response = StreamedResponse(
           controller.stream,
