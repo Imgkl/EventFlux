@@ -1,6 +1,13 @@
 
 # Changelog 📝
 
+
+### v2.2.2-dev.2 🛠️
+- Potential fix for multiple connection issue when using single instance method
+    - Solves [#32](https://github.com/Imgkl/EventFlux/issues/32)
+- Added a check to ensure that stream is not closed before sending data
+
+
 ### v2.2.1 🚀
 - Added Multipart/files support
     - Now you can send multipart/files data to the server.
