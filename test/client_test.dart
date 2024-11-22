@@ -63,6 +63,152 @@ void main() {
           });
         });
 
+        group('adds headers', () {
+          final response = StreamedResponse(
+            Stream.value([]),
+            200,
+            headers: {'content-type': 'text/event-stream'},
+          );
+
+          test('to request', () {
+            final headers = {'test': 'test', 'test2': 'test2'};
+            when(mockHttpClient.send(any))
+                .thenAnswer((_) => Future.value(response));
+
+            fakeAsync((async) {
+              eventFlux.connect(
+                connectionType,
+                testUrl,
+                httpClient: mockHttpClient,
+                header: headers,
+                onSuccessCallback: (_) {},
+              );
+              async.flushMicrotasks();
+            });
+
+            final call = verify(mockHttpClient.send(captureAny))..called(1);
+            final request = call.captured.single as Request;
+            expect(request.headers, headers);
+          });
+
+          test('to multipart request', () {
+            final headers = {'test': 'test', 'test2': 'test2'};
+            when(mockHttpClient.send(any))
+                .thenAnswer((_) => Future.value(response));
+
+            fakeAsync((async) {
+              eventFlux.connect(
+                connectionType,
+                testUrl,
+                httpClient: mockHttpClient,
+                header: headers,
+                multipartRequest: true,
+                onSuccessCallback: (_) {},
+              );
+              async.flushMicrotasks();
+            });
+
+            final call = verify(mockHttpClient.send(captureAny))..called(1);
+            final request = call.captured.single as MultipartRequest;
+            expect(request.headers, headers);
+          });
+
+          test('to multipart request with files', () {
+            final headers = {'test': 'test', 'test2': 'test2'};
+            when(mockHttpClient.send(any))
+                .thenAnswer((_) => Future.value(response));
+
+            fakeAsync((async) {
+              eventFlux.connect(
+                connectionType,
+                testUrl,
+                httpClient: mockHttpClient,
+                header: headers,
+                files: [MultipartFile.fromString('test', 'test')],
+                onSuccessCallback: (_) {},
+              );
+              async.flushMicrotasks();
+            });
+
+            final call = verify(mockHttpClient.send(captureAny))..called(1);
+            final request = call.captured.single as MultipartRequest;
+            expect(request.headers, headers);
+          });
+        });
+
+        group('adds default headers', () {
+          final response = StreamedResponse(
+            Stream.value([]),
+            200,
+            headers: {'content-type': 'text/event-stream'},
+          );
+
+          test('to request', () {
+            when(mockHttpClient.send(any))
+                .thenAnswer((_) => Future.value(response));
+
+            fakeAsync((async) {
+              eventFlux.connect(
+                connectionType,
+                testUrl,
+                httpClient: mockHttpClient,
+                onSuccessCallback: (_) {},
+              );
+              async.flushMicrotasks();
+
+              final call = verify(mockHttpClient.send(captureAny))..called(1);
+              final request = call.captured.single as Request;
+              expect(request.headers, {
+                'Accept': 'text/event-stream',
+              });
+            });
+          });
+
+          test('to multipart request', () {
+            when(mockHttpClient.send(any))
+                .thenAnswer((_) => Future.value(response));
+
+            fakeAsync((async) {
+              eventFlux.connect(
+                connectionType,
+                testUrl,
+                httpClient: mockHttpClient,
+                multipartRequest: true,
+                onSuccessCallback: (_) {},
+              );
+              async.flushMicrotasks();
+
+              final call = verify(mockHttpClient.send(captureAny))..called(1);
+              final request = call.captured.single as MultipartRequest;
+              expect(request.headers, {
+                'Accept': 'text/event-stream',
+              });
+            });
+          });
+
+          test('to multipart request with files', () {
+            when(mockHttpClient.send(any))
+                .thenAnswer((_) => Future.value(response));
+
+            fakeAsync((async) {
+              eventFlux.connect(
+                connectionType,
+                testUrl,
+                httpClient: mockHttpClient,
+                files: [MultipartFile.fromString('test', 'test')],
+                onSuccessCallback: (_) {},
+              );
+              async.flushMicrotasks();
+
+              final call = verify(mockHttpClient.send(captureAny))..called(1);
+              final request = call.captured.single as MultipartRequest;
+              expect(request.headers, {
+                'Accept': 'text/event-stream',
+              });
+            });
+          });
+        });
+
         test('error response calls onError callback', () {
           final response = StreamedResponse(
             Stream.value([]),
@@ -276,110 +422,110 @@ void main() {
             expect(connectionAttempts, 3);
           });
         });
-      });
 
-      test('sends MultipartRequest with files and fields', () {
-        final controller = StreamController<List<int>>();
-        final response = StreamedResponse(
-          controller.stream,
-          200,
-          headers: {'content-type': 'text/event-stream'},
-        );
-        final multipartFile = MultipartFile.fromString('test', 'test');
-        final body = {'testKey': 'testValue'};
-
-        when(mockHttpClient.send(any))
-            .thenAnswer((_) => Future.value(response));
-
-        EventFluxResponse? eventFluxResponse;
-        fakeAsync((async) {
-          eventFlux.connect(
-            EventFluxConnectionType.get,
-            testUrl,
-            httpClient: mockHttpClient,
-            multipartRequest: true,
-            files: [
-              multipartFile,
-            ],
-            body: body,
-            onSuccessCallback: (response) {
-              eventFluxResponse = response;
-            },
+        test('sends MultipartRequest with files and fields', () {
+          final controller = StreamController<List<int>>();
+          final response = StreamedResponse(
+            controller.stream,
+            200,
+            headers: {'content-type': 'text/event-stream'},
           );
+          final multipartFile = MultipartFile.fromString('test', 'test');
+          final body = {'testKey': 'testValue'};
 
-          async.flushMicrotasks();
+          when(mockHttpClient.send(any))
+              .thenAnswer((_) => Future.value(response));
 
-          final call = verify(mockHttpClient.send(captureAny))..called(1);
-          final request = call.captured.single as MultipartRequest;
-          expect(request.files.single, multipartFile);
-          expect(request.fields, body);
-          expect(eventFluxResponse?.status, EventFluxStatus.connected);
+          EventFluxResponse? eventFluxResponse;
+          fakeAsync((async) {
+            eventFlux.connect(
+              connectionType,
+              testUrl,
+              httpClient: mockHttpClient,
+              multipartRequest: true,
+              files: [
+                multipartFile,
+              ],
+              body: body,
+              onSuccessCallback: (response) {
+                eventFluxResponse = response;
+              },
+            );
+
+            async.flushMicrotasks();
+
+            final call = verify(mockHttpClient.send(captureAny))..called(1);
+            final request = call.captured.single as MultipartRequest;
+            expect(request.files.single, multipartFile);
+            expect(request.fields, body);
+            expect(eventFluxResponse?.status, EventFluxStatus.connected);
+          });
         });
-      });
 
-      test('sends multipart request with files', () {
-        final controller = StreamController<List<int>>();
-        final response = StreamedResponse(
-          controller.stream,
-          200,
-          headers: {'content-type': 'text/event-stream'},
-        );
-        final multipartFile = MultipartFile.fromString('test', 'test');
-
-        when(mockHttpClient.send(any))
-            .thenAnswer((_) => Future.value(response));
-
-        EventFluxResponse? eventFluxResponse;
-        fakeAsync((async) {
-          eventFlux.connect(
-            EventFluxConnectionType.get,
-            testUrl,
-            httpClient: mockHttpClient,
-            multipartRequest: true,
-            files: [multipartFile],
-            onSuccessCallback: (response) {
-              eventFluxResponse = response;
-            },
+        test('sends multipart request with files', () {
+          final controller = StreamController<List<int>>();
+          final response = StreamedResponse(
+            controller.stream,
+            200,
+            headers: {'content-type': 'text/event-stream'},
           );
-          async.flushMicrotasks();
+          final multipartFile = MultipartFile.fromString('test', 'test');
 
-          expect(eventFluxResponse?.status, EventFluxStatus.connected);
-          final call = verify(mockHttpClient.send(captureAny))..called(1);
-          final request = call.captured.single as MultipartRequest;
-          expect(request.files.single, multipartFile);
+          when(mockHttpClient.send(any))
+              .thenAnswer((_) => Future.value(response));
+
+          EventFluxResponse? eventFluxResponse;
+          fakeAsync((async) {
+            eventFlux.connect(
+              connectionType,
+              testUrl,
+              httpClient: mockHttpClient,
+              multipartRequest: true,
+              files: [multipartFile],
+              onSuccessCallback: (response) {
+                eventFluxResponse = response;
+              },
+            );
+            async.flushMicrotasks();
+
+            expect(eventFluxResponse?.status, EventFluxStatus.connected);
+            final call = verify(mockHttpClient.send(captureAny))..called(1);
+            final request = call.captured.single as MultipartRequest;
+            expect(request.files.single, multipartFile);
+          });
         });
-      });
 
-      test('sends MultipartRequest with fields', () {
-        final controller = StreamController<List<int>>();
-        final response = StreamedResponse(
-          controller.stream,
-          200,
-          headers: {'content-type': 'text/event-stream'},
-        );
-        final body = {'testKey': 'testValue'};
-
-        when(mockHttpClient.send(any))
-            .thenAnswer((_) => Future.value(response));
-
-        EventFluxResponse? eventFluxResponse;
-        fakeAsync((async) {
-          eventFlux.connect(
-            EventFluxConnectionType.get,
-            testUrl,
-            httpClient: mockHttpClient,
-            multipartRequest: true,
-            body: body,
-            onSuccessCallback: (response) {
-              eventFluxResponse = response;
-            },
+        test('sends MultipartRequest with fields', () {
+          final controller = StreamController<List<int>>();
+          final response = StreamedResponse(
+            controller.stream,
+            200,
+            headers: {'content-type': 'text/event-stream'},
           );
-          async.flushMicrotasks();
+          final body = {'testKey': 'testValue'};
 
-          expect(eventFluxResponse?.status, EventFluxStatus.connected);
-          final call = verify(mockHttpClient.send(captureAny))..called(1);
-          final request = call.captured.single as MultipartRequest;
-          expect(request.fields, body);
+          when(mockHttpClient.send(any))
+              .thenAnswer((_) => Future.value(response));
+
+          EventFluxResponse? eventFluxResponse;
+          fakeAsync((async) {
+            eventFlux.connect(
+              connectionType,
+              testUrl,
+              httpClient: mockHttpClient,
+              multipartRequest: true,
+              body: body,
+              onSuccessCallback: (response) {
+                eventFluxResponse = response;
+              },
+            );
+            async.flushMicrotasks();
+
+            expect(eventFluxResponse?.status, EventFluxStatus.connected);
+            final call = verify(mockHttpClient.send(captureAny))..called(1);
+            final request = call.captured.single as MultipartRequest;
+            expect(request.fields, body);
+          });
         });
       });
     }
