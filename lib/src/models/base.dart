@@ -1,4 +1,7 @@
-import 'package:eventflux/eventflux.dart';
+import '../enum.dart';
+import 'exception.dart';
+import 'reconnect.dart';
+import 'response.dart';
 
 /// Abstract base class for EventFlux connection management.
 ///

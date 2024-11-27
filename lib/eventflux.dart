@@ -28,10 +28,11 @@ library eventflux;
 ///
 /// This export file simplifies the usage of the EventFlux library and promotes a clean
 /// and organized way of accessing its components.
-export 'client.dart';
-export 'enum.dart';
-export 'http_client_adapter.dart';
-export 'models/data.dart';
-export 'models/exception.dart';
-export 'models/reconnect.dart';
-export 'models/response.dart';
+export 'src/client.dart';
+export 'src/enum.dart';
+export 'src/http_client_adapter.dart';
+export 'src/models/data.dart';
+export 'src/models/exception.dart';
+export 'src/models/reconnect.dart';
+export 'src/models/response.dart';
+export 'src/models/web_config/web_config.dart';

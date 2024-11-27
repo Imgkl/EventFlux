@@ -8,6 +8,12 @@ import 'request_credentials.dart';
 import 'request_mode.dart';
 import 'request_referrer_policy.dart';
 
+export 'redirect_policy.dart';
+export 'request_cache.dart';
+export 'request_credentials.dart';
+export 'request_mode.dart';
+export 'request_referrer_policy.dart';
+
 /// Configuration for web requests.
 class WebConfig {
   /// Create a new web configuration.

@@ -2,7 +2,7 @@
 // Copyright (c) 2023-2024 Yaroslav Vorobev and contributors
 // Licensed under the MIT License
 
-import 'package:eventflux/models/web_config/request_mode.dart';
+import 'package:eventflux/src/models/web_config/request_mode.dart';
 import 'package:fetch_client/fetch_client.dart';
 
 /// Controls how requests will interact with the browser's HTTP cache.

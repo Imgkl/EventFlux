@@ -4,16 +4,16 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:eventflux/enum.dart';
-import 'package:eventflux/extensions/fetch_client_extension.dart';
-import 'package:eventflux/http_client_adapter.dart';
-import 'package:eventflux/models/base.dart';
-import 'package:eventflux/models/data.dart';
-import 'package:eventflux/models/exception.dart';
-import 'package:eventflux/models/reconnect.dart';
-import 'package:eventflux/models/response.dart';
-import 'package:eventflux/models/web_config/web_config.dart';
-import 'package:eventflux/utils.dart';
+import 'package:eventflux/src/enum.dart';
+import 'package:eventflux/src/extensions/fetch_client_extension.dart';
+import 'package:eventflux/src/http_client_adapter.dart';
+import 'package:eventflux/src/models/base.dart';
+import 'package:eventflux/src/models/data.dart';
+import 'package:eventflux/src/models/exception.dart';
+import 'package:eventflux/src/models/reconnect.dart';
+import 'package:eventflux/src/models/response.dart';
+import 'package:eventflux/src/models/web_config/web_config.dart';
+import 'package:eventflux/src/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 

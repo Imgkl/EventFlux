@@ -1,4 +1,4 @@
-import 'package:eventflux/models/web_config/request_credentials.dart';
+import 'package:eventflux/src/models/web_config/request_credentials.dart';
 import 'package:fetch_client/fetch_client.dart';
 import 'package:test/test.dart';
 

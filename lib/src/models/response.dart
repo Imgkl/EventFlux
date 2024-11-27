@@ -1,6 +1,6 @@
-import 'package:eventflux/enum.dart';
-import 'package:eventflux/models/data.dart';
-import 'package:eventflux/models/exception.dart';
+import 'package:eventflux/src/enum.dart';
+import 'package:eventflux/src/models/data.dart';
+import 'package:eventflux/src/models/exception.dart';
 
 /// `EventFluxResponse` encapsulates the response from an EventFlux connection operation.
 ///

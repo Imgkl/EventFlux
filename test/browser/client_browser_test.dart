@@ -1,13 +1,9 @@
 @TestOn('browser')
 import 'dart:async';
 
-import 'package:eventflux/eventflux.dart';
-import 'package:eventflux/models/web_config/redirect_policy.dart';
-import 'package:eventflux/models/web_config/request_cache.dart';
-import 'package:eventflux/models/web_config/request_credentials.dart';
-import 'package:eventflux/models/web_config/request_mode.dart';
-import 'package:eventflux/models/web_config/request_referrer_policy.dart';
-import 'package:eventflux/models/web_config/web_config.dart';
+import 'package:eventflux/src/client.dart';
+import 'package:eventflux/src/enum.dart';
+import 'package:eventflux/src/models/web_config/web_config.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:fetch_client/fetch_client.dart';
 import 'package:test/test.dart';

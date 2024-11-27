@@ -1,4 +1,4 @@
-import 'package:eventflux/models/web_config/web_config.dart';
+import 'package:eventflux/src/models/web_config/web_config.dart';
 import 'package:fetch_client/fetch_client.dart';
 
 extension FetchClientExtension on FetchClient {
