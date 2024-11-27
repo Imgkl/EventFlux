@@ -38,4 +38,4 @@ jobs:
         run: flutter test test/integration/eventflux_test_vm.dart
 
       - name: Run Integration Tests Browser
-        run: flutter test test/integration/eventflux_test_browser.dart --platform chrome
+        run: flutter test test/browser --platform chrome

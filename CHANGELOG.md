@@ -1,6 +1,11 @@
 
 # Changelog 📝
 
+### v2.3.0-dev.1 🛠️
+This release adds web support 🚀
+- Added `webConfig` parameter to the `connect` method.
+    - This allows you to configure the web client.
+    - Refer README for more info.
 
 ### v2.2.2-dev.2 🛠️
 - Potential fix for multiple connection issue when using single instance method

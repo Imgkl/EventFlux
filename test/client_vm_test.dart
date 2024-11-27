@@ -6,7 +6,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:http/http.dart';
 import 'package:test/test.dart';
 
-/// Run this with `flutter test test/integration/eventflux_test_vm.dart`
+/// Run this with `flutter test test/eventflux_test_vm.dart`
 void main() {
   late EventFlux eventFlux;
 
