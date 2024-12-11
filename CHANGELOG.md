@@ -7,6 +7,7 @@ This release adds web support 🚀
     - This allows you to configure the web client.
     - Refer README for more info.
 
+
 ### v2.2.2-dev.2 🛠️
 - Potential fix for multiple connection issue when using single instance method
     - Solves [#32](https://github.com/Imgkl/EventFlux/issues/32)

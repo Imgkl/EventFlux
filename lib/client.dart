@@ -150,6 +150,7 @@ class EventFlux extends EventFluxBase {
     /// Will be ignored on non-web platforms.
     WebConfig? webConfig,
   }) {
+
     assert(!(kIsWeb && webConfig == null), 'WebConfig must be provided on web');
     // This check prevents redundant connection requests when a connection is already in progress.
     // This does not prevent reconnection attempts if autoReconnect is enabled.
@@ -615,6 +616,7 @@ class EventFlux extends EventFluxBase {
                 multipartRequest: multipartRequest,
               );
             }
+
           });
           break;
       }
