@@ -1,6 +1,6 @@
 name: eventflux
 description: "Efficient handling of server-sent event streams with easy connectivity and data management."
-version: 2.2.2-dev.2
+version: 2.3.0-dev.1
 homepage: https://gokula.dev
 repository: https://github.com/Imgkl/EventFlux
 issue_tracker: https://github.com/Imgkl/EventFlux/issues
@@ -14,6 +14,7 @@ environment:
   flutter: ">=1.17.0"
 
 dependencies:
+  fetch_client: ^1.1.2
   flutter:
     sdk: flutter
   http: ^1.2.2
