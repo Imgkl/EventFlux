@@ -335,8 +335,11 @@ class EventFlux extends EventFluxBase {
                 return;
               }
 
+              /// Removing the line separator from the data line.
+              final sanitizedDataLine = dataLine.replaceAll('\u2028', '');
+
               /// Parsing each line through the regex.
-              Match match = lineRegex.firstMatch(dataLine)!;
+              Match match = lineRegex.firstMatch(sanitizedDataLine)!;
               var field = match.group(1);
               if (field!.isEmpty) {
                 return;
