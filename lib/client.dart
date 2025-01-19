@@ -356,7 +356,8 @@ class EventFlux extends EventFluxBase {
                     currentEventFluxData.event = value;
                     break;
                   case 'data':
-                    currentEventFluxData.data = '${currentEventFluxData.data}$value\n';
+                    currentEventFluxData.data =
+                        '${currentEventFluxData.data}$value\n';
                     break;
                   case 'id':
                     currentEventFluxData.id = value;
@@ -380,6 +381,7 @@ class EventFlux extends EventFluxBase {
                   );
                 }
               }
+            },
             cancelOnError: true,
             onDone: () async {
               eventFluxLog('Stream Closed', LogEvent.info, _tag);
