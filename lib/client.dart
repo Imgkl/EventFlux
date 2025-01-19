@@ -334,38 +334,52 @@ class EventFlux extends EventFluxBase {
                     EventFluxData(data: '', id: '', event: '');
                 return;
               }
+              try {
+                /// Removing the line separator from the data line. It breaks the parse.
+                final sanitizedDataLine = dataLine.replaceAll('\u2028', '');
 
-              /// Removing the line separator from the data line.
-              final sanitizedDataLine = dataLine.replaceAll('\u2028', '');
+                /// Parsing each line through the regex.
+                Match match = lineRegex.firstMatch(sanitizedDataLine)!;
+                var field = match.group(1);
+                if (field!.isEmpty) {
+                  return;
+                }
+                var value = '';
+                if (field == 'data') {
+                  /// If the field is data, we get the data through the substring
+                  value = dataLine.substring(5);
+                } else {
+                  value = match.group(2) ?? '';
+                }
+                switch (field) {
+                  case 'event':
+                    currentEventFluxData.event = value;
+                    break;
+                  case 'data':
+                    currentEventFluxData.data = '${currentEventFluxData.data}$value\n';
+                    break;
+                  case 'id':
+                    currentEventFluxData.id = value;
+                    break;
+                  case 'retry':
+                    break;
+                }
+              } catch (e) {
+                eventFluxLog(
+                  'Error parsing data line: $e',
+                  LogEvent.error,
+                  _tag,
+                );
 
-              /// Parsing each line through the regex.
-              Match match = lineRegex.firstMatch(sanitizedDataLine)!;
-              var field = match.group(1);
-              if (field!.isEmpty) {
-                return;
+                /// If the `onError` callback is provided, pass the error.
+                if (onError != null) {
+                  onError(
+                    EventFluxException(
+                      message: 'Error parsing data line: $e',
+                    ),
+                  );
+                }
               }
-              var value = '';
-              if (field == 'data') {
-                /// If the field is data, we get the data through the substring
-                value = dataLine.substring(5);
-              } else {
-                value = match.group(2) ?? '';
-              }
-              switch (field) {
-                case 'event':
-                  currentEventFluxData.event = value;
-                  break;
-                case 'data':
-                  currentEventFluxData.data =
-                      '${currentEventFluxData.data}$value\n';
-                  break;
-                case 'id':
-                  currentEventFluxData.id = value;
-                  break;
-                case 'retry':
-                  break;
-              }
-            },
             cancelOnError: true,
             onDone: () async {
               eventFluxLog('Stream Closed', LogEvent.info, _tag);
