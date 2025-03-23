@@ -6,7 +6,7 @@ EventFlux is a Dart package designed for efficient handling of server-sent event
 ## Supported Platforms
 | Android | iOS  |  Web | MacOS | Windows | Linux |
 | ------ | ---- | ---- | ----- | ------- | ----- |
-| ✅|✅|🏗️|✅|❓|❓| 
+| ✅|✅|✅|✅|❓|❓| 
 
 *Pssst... see those question marks? That's your cue, tech adventurers! Dive in, test, and tell me all about it.* 🚀🛠️
 
@@ -211,6 +211,7 @@ Connects to a server-sent event stream.
 | `tag`               | `String`                        | Optional tag for debugging.                                | -                                 |
 | `logReceivedData`  | `bool`                          | Whether to log received data.                              | `false`                           |
 | `httpClient`        | `HttpClientAdapter?`            | Optional Http Client Adapter to allow usage of different http clients. | -                                 |
+| `webConfig`         | `WebConfig?`                    | Allows configuring the web client. Ignored for non-web platforms. | -                                 |
 
 &nbsp;<br>
 </details>

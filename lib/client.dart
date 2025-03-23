@@ -5,13 +5,16 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:eventflux/enum.dart';
+import 'package:eventflux/extensions/fetch_client_extension.dart';
 import 'package:eventflux/http_client_adapter.dart';
 import 'package:eventflux/models/base.dart';
 import 'package:eventflux/models/data.dart';
 import 'package:eventflux/models/exception.dart';
 import 'package:eventflux/models/reconnect.dart';
 import 'package:eventflux/models/response.dart';
+import 'package:eventflux/models/web_config/web_config.dart';
 import 'package:eventflux/utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 
 /// A class for managing event-driven data streams using Server-Sent Events (SSE).
@@ -24,7 +27,8 @@ class EventFlux extends EventFluxBase {
   static final EventFlux _instance = EventFlux._();
 
   static EventFlux get instance => _instance;
-  Client? _client;
+  @visibleForTesting
+  Client? client;
   StreamController<EventFluxData>? _streamController;
   bool _isExplicitDisconnect = false;
   StreamSubscription? _streamSubscription;
@@ -141,7 +145,13 @@ class EventFlux extends EventFluxBase {
     bool logReceivedData = false,
     List<MultipartFile>? files,
     bool multipartRequest = false,
+
+    /// Optional web config to be used for the connection. Must be provided on web.
+    /// Will be ignored on non-web platforms.
+    WebConfig? webConfig,
   }) {
+
+    assert(!(kIsWeb && webConfig == null), 'WebConfig must be provided on web');
     // This check prevents redundant connection requests when a connection is already in progress.
     // This does not prevent reconnection attempts if autoReconnect is enabled.
 
@@ -191,6 +201,7 @@ class EventFlux extends EventFluxBase {
       logReceivedData: logReceivedData,
       files: files,
       multipartRequest: multipartRequest,
+      webConfig: webConfig,
     );
   }
 
@@ -209,12 +220,14 @@ class EventFlux extends EventFluxBase {
     bool logReceivedData = false,
     List<MultipartFile>? files,
     bool multipartRequest = false,
+    WebConfig? webConfig,
   }) {
     /// Initalise variables
     /// Create a new HTTP client based on the platform
     /// Uses and internal http client if no http client adapter is present
     if (httpClient == null) {
-      _client = Client();
+      client =
+          kIsWeb ? FetchClientExtension.fromWebConfig(webConfig!) : Client();
     }
 
     /// Set `_isExplicitDisconnect` to `false` before connecting.
@@ -272,7 +285,7 @@ class EventFlux extends EventFluxBase {
       response = httpClient.send(request);
     } else {
       // Use internal HTTP client
-      response = _client!.send(request);
+      response = client!.send(request);
     }
 
     response.then((data) async {
@@ -494,7 +507,7 @@ class EventFlux extends EventFluxBase {
     try {
       _streamSubscription?.cancel();
       _streamController?.close();
-      _client?.close();
+      client?.close();
       Future.delayed(const Duration(seconds: 1), () {});
       eventFluxLog('Disconnected', LogEvent.info, _tag);
       _status = EventFluxStatus.disconnected;
@@ -580,25 +593,30 @@ class EventFlux extends EventFluxBase {
           break;
 
         case ReconnectMode.exponential:
-          _interval = _interval * 2;
-          eventFluxLog("Trying again in ${_interval.toString()} seconds",
-              LogEvent.reconnect, _tag);
 
           /// It waits for the specified interval before attempting to reconnect.
           await Future.delayed(Duration(seconds: _interval), () {
-            _start(
-              type,
-              url,
-              onSuccessCallback: onSuccessCallback,
-              autoReconnect: autoReconnect,
-              onError: onError,
-              header: header,
-              onConnectionClose: onConnectionClose,
-              httpClient: httpClient,
-              body: body,
-              files: files,
-              multipartRequest: multipartRequest,
-            );
+            _interval = _interval * 2;
+            if (!isExplicitDisconnect) {
+              eventFluxLog("Trying again in ${_interval.toString()} seconds",
+                  LogEvent.reconnect, _tag);
+
+              _status = EventFluxStatus.connectionInitiated;
+              _start(
+                type,
+                url,
+                onSuccessCallback: onSuccessCallback,
+                autoReconnect: autoReconnect,
+                onError: onError,
+                header: header,
+                onConnectionClose: onConnectionClose,
+                httpClient: httpClient,
+                body: body,
+                files: files,
+                multipartRequest: multipartRequest,
+              );
+            }
+
           });
           break;
       }
