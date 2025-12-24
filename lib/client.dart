@@ -402,6 +402,20 @@ class EventFlux extends EventFluxBase {
                 ));
               }
 
+              // Ensure we clean up internal resources so consumers see a closed stream
+              try {
+                await _stop();
+              } catch (_) {
+                // swallow stop errors to not block reconnection attempts
+              }
+
+              // Notify connection close so callers can run their cleanup
+              if (onConnectionClose != null) {
+                try {
+                  onConnectionClose();
+                } catch (_) {}
+              }
+
               _attemptReconnectIfNeeded(
                 _isExplicitDisconnect,
                 autoReconnect,
@@ -462,6 +476,17 @@ class EventFlux extends EventFluxBase {
   @override
   Future<EventFluxStatus> disconnect() async {
     _isExplicitDisconnect = true;
+    eventFluxLog('Started disconnection', LogEvent.info, _tag);
+    if (_streamController != null) {
+      try {
+        await _streamController!.done.timeout(const Duration(seconds: 5));
+        eventFluxLog('Stream sink closed', LogEvent.info, _tag);
+        return EventFluxStatus.disconnected;
+      } catch (_) {
+        eventFluxLog(
+            'Timeout after stream close in background: ', LogEvent.info, _tag);
+      }
+    }
     return await _stop();
   }
 
