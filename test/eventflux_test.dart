@@ -1,12 +1,57 @@
-// import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:eventflux/models/exception.dart';
 
-// import 'package:eventflux/eventflux.dart';
+void main() {
+  group('$EventFluxException', () {
+    test('stores originalError and stackTrace', () {
+      const originalError = FormatException('bad format');
+      final stackTrace = StackTrace.current;
 
-// void main() {
-//   test('adds one to input values', () {
-//     final calculator = Calculator();
-//     expect(calculator.addOne(2), 3);
-//     expect(calculator.addOne(-7), -6);
-//     expect(calculator.addOne(0), 1);
-//   });
-// }
+      final exception = EventFluxException(
+        message: originalError.toString(),
+        statusCode: 500,
+        reasonPhrase: 'Internal Server Error',
+        originalError: originalError,
+        stackTrace: stackTrace,
+      );
+
+      expect(exception.message, contains('bad format'));
+      expect(exception.statusCode, 500);
+      expect(exception.reasonPhrase, 'Internal Server Error');
+      expect(exception.originalError, same(originalError));
+      expect(exception.stackTrace, same(stackTrace));
+      expect(exception.originalError, isA<FormatException>());
+    });
+
+    test('stores originalError and stackTrace passed through on catch', () {
+      try {
+        throw ArgumentError('bad argument');
+      } on ArgumentError catch (e) {
+        final exception = EventFluxException(
+          message: e.toString(),
+          originalError: e,
+          stackTrace: e.stackTrace,
+        );
+
+        expect(exception.originalError, isA<ArgumentError>());
+        expect(
+            (exception.originalError as ArgumentError).message, 'bad argument');
+        expect(exception.stackTrace, e.stackTrace);
+      }
+    });
+
+    test('originalError and stackTrace are optional', () {
+      final exception = EventFluxException(
+        message: 'something went wrong',
+        statusCode: 400,
+        reasonPhrase: 'Bad Request',
+      );
+
+      expect(exception.message, 'something went wrong');
+      expect(exception.statusCode, 400);
+      expect(exception.reasonPhrase, 'Bad Request');
+      expect(exception.originalError, isNull);
+      expect(exception.stackTrace, isNull);
+    });
+  });
+}
