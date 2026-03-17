@@ -419,6 +419,7 @@ class EventFlux extends EventFluxBase {
                 body: body,
                 files: files,
                 multipartRequest: multipartRequest,
+                webConfig: webConfig,
               );
             },
             onError: (error, s) async {
@@ -450,6 +451,7 @@ class EventFlux extends EventFluxBase {
                 body: body,
                 files: files,
                 multipartRequest: multipartRequest,
+                webConfig: webConfig,
               );
             },
           );
@@ -480,6 +482,7 @@ class EventFlux extends EventFluxBase {
         body: body,
         files: files,
         multipartRequest: multipartRequest,
+        webConfig: webConfig,
       );
     });
   }
