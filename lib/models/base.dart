@@ -1,4 +1,5 @@
 import 'package:eventflux/eventflux.dart';
+import 'package:http/http.dart';
 
 /// Abstract base class for EventFlux connection management.
 ///
@@ -26,6 +27,10 @@ import 'package:eventflux/eventflux.dart';
 ///       - `autoReconnect`: Optional flag to enable automatic reconnection. Defaults to false.
 ///       - `reconnectConfig`: Optional configuration for reconnection attempts. If `autoReconnect` is true, this parameter is required.
 ///      -  `tag`: Optional tag to identify the connection.
+///       - `httpClient`: Optional HTTP client adapter to be used for the connection.
+///       - `files`: Optional list of files to be sent with the request.
+///       - `multipartRequest`: Boolean value that determines if the request is a multipart request.
+///       - `webConfig`: Optional web config to be used for the connection. Must be provided on web.
 ///
 ///   - `disconnect`: Disconnects from the current event stream. This method
 ///     must be implemented by subclasses to properly close any open connections
@@ -59,9 +64,13 @@ abstract class EventFluxBase {
     bool autoReconnect = false,
     ReconnectConfig? reconnectConfig,
     Function(EventFluxException)? onError,
+    HttpClientAdapter? httpClient,
     Map<String, dynamic>? body,
     String? tag,
     bool logReceivedData = false,
+    List<MultipartFile>? files,
+    bool multipartRequest = false,
+    WebConfig? webConfig,
   });
   Future<EventFluxStatus> disconnect();
 }

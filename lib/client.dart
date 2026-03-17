@@ -151,7 +151,9 @@ class EventFlux extends EventFluxBase {
     WebConfig? webConfig,
   }) {
 
-    assert(!(kIsWeb && webConfig == null), 'WebConfig must be provided on web');
+    if (kIsWeb && webConfig == null) {
+      throw ArgumentError('WebConfig must be provided on web');
+    }
     // This check prevents redundant connection requests when a connection is already in progress.
     // This does not prevent reconnection attempts if autoReconnect is enabled.
 
@@ -302,7 +304,7 @@ class EventFlux extends EventFluxBase {
       );
 
       if (data.statusCode < 200 || data.statusCode >= 300) {
-        _status = EventFluxStatus.connected;
+        _status = EventFluxStatus.error;
         String responseBody = await data.stream.bytesToString();
         if (onError != null) {
           Map<String, dynamic>? errorDetails;
@@ -339,6 +341,7 @@ class EventFlux extends EventFluxBase {
           body: body,
           files: files,
           multipartRequest: multipartRequest,
+          webConfig: webConfig,
         );
         return;
       }
@@ -538,6 +541,7 @@ class EventFlux extends EventFluxBase {
     Map<String, dynamic>? body,
     List<MultipartFile>? files,
     bool multipartRequest = false,
+    WebConfig? webConfig,
   }) async {
     /// If autoReconnect is enabled and the user has not explicitly disconnected, it attempts to reconnect.
     if (autoReconnect && !isExplicitDisconnect && _reconnectConfig != null) {
@@ -587,6 +591,7 @@ class EventFlux extends EventFluxBase {
                 body: body,
                 files: files,
                 multipartRequest: multipartRequest,
+                webConfig: webConfig,
               );
             }
           });
@@ -614,6 +619,7 @@ class EventFlux extends EventFluxBase {
                 body: body,
                 files: files,
                 multipartRequest: multipartRequest,
+                webConfig: webConfig,
               );
             }
 

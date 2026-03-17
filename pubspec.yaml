@@ -34,3 +34,4 @@ platforms:
   macos:
   linux:
   windows:
+  web:
