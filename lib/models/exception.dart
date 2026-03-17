@@ -34,10 +34,14 @@ class EventFluxException implements Exception {
   final String? message;
   final int? statusCode;
   final String? reasonPhrase;
+  final Object? originalError;
+  final StackTrace? stackTrace;
 
   EventFluxException({
     this.message,
     this.statusCode,
     this.reasonPhrase,
+    this.originalError,
+    this.stackTrace,
   });
 }

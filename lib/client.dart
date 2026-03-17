@@ -435,6 +435,8 @@ class EventFlux extends EventFluxBase {
                   message: error.toString(),
                   statusCode: data.statusCode,
                   reasonPhrase: data.reasonPhrase,
+                  originalError: error,
+                  stackTrace: s,
                 ));
               }
 
@@ -466,7 +468,11 @@ class EventFlux extends EventFluxBase {
       }
     }).catchError((e) async {
       if (onError != null) {
-        onError(EventFluxException(message: e.toString()));
+        onError(EventFluxException(
+          message: e.toString(),
+          originalError: e,
+          stackTrace: e is Error ? e.stackTrace : null,
+        ));
       }
       await _stop();
       _attemptReconnectIfNeeded(
