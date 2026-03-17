@@ -41,8 +41,25 @@ class EventFluxData {
   /// Constructs an instance of `EventFluxData` with given id, event, and data.
   EventFluxData({required this.data, required this.id, required this.event});
   EventFluxData.fromData(String data) {
-    id = data.split("\n")[0].split('id:')[1];
-    event = data.split("\n")[1].split('event:')[1];
-    this.data = data.split("\n")[2].split('data:')[1];
+    final lines = data.split("\n");
+    if (lines.length < 3) {
+      throw FormatException(
+        'EventFluxData.fromData expects at least 3 lines (id:, event:, data:), '
+        'got ${lines.length}',
+        data,
+      );
+    }
+    final idParts = lines[0].split('id:');
+    final eventParts = lines[1].split('event:');
+    final dataParts = lines[2].split('data:');
+    if (idParts.length < 2 || eventParts.length < 2 || dataParts.length < 2) {
+      throw FormatException(
+        'EventFluxData.fromData expects lines prefixed with "id:", "event:", "data:"',
+        data,
+      );
+    }
+    id = idParts[1];
+    event = eventParts[1];
+    this.data = dataParts[1];
   }
 }

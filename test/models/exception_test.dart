@@ -55,5 +55,37 @@ void main() {
       expect(exception.originalError, isNull);
       expect(exception.stackTrace, isNull);
     });
+
+    group('toString', () {
+      test('includes statusCode, reasonPhrase, and message', () {
+        final exception = EventFluxException(
+          message: 'connection failed',
+          statusCode: 503,
+          reasonPhrase: 'Service Unavailable',
+        );
+        expect(
+          exception.toString(),
+          'EventFluxException [503 Service Unavailable]: connection failed',
+        );
+      });
+
+      test('includes statusCode without reasonPhrase', () {
+        final exception = EventFluxException(
+          message: 'timeout',
+          statusCode: 408,
+        );
+        expect(exception.toString(), 'EventFluxException [408]: timeout');
+      });
+
+      test('includes only message when no statusCode', () {
+        final exception = EventFluxException(message: 'parse error');
+        expect(exception.toString(), 'EventFluxException: parse error');
+      });
+
+      test('returns class name when all fields are null', () {
+        final exception = EventFluxException();
+        expect(exception.toString(), 'EventFluxException');
+      });
+    });
   });
 }

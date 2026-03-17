@@ -37,6 +37,8 @@ class EventFlux extends EventFluxBase {
   int _maxAttempts = 0;
   int _interval = 0;
   String? _tag;
+  Function()? _onConnectionClose;
+  static final RegExp _lineRegex = RegExp(r'^([^:]*)(?::)?(?: )?(.*)?$');
 
   /// Factory method for spawning new instances of `EventFlux`.
   ///
@@ -224,6 +226,8 @@ class EventFlux extends EventFluxBase {
     bool multipartRequest = false,
     WebConfig? webConfig,
   }) {
+    _onConnectionClose = onConnectionClose;
+
     /// Initalise variables
     /// Create a new HTTP client based on the platform
     /// Uses and internal http client if no http client adapter is present
@@ -236,7 +240,6 @@ class EventFlux extends EventFluxBase {
     _isExplicitDisconnect = false;
 
     _streamController = StreamController<EventFluxData>();
-    RegExp lineRegex = RegExp(r'^([^:]*)(?::)?(?: )?(.*)?$');
     EventFluxData currentEventFluxData =
         EventFluxData(data: '', id: '', event: '');
 
@@ -303,7 +306,7 @@ class EventFlux extends EventFluxBase {
         _tag,
       );
 
-      if (data.statusCode < 200 || data.statusCode >= 300) {
+      if (data.statusCode != 200) {
         _status = EventFluxStatus.error;
         String responseBody = await data.stream.bytesToString();
         if (onError != null) {
@@ -324,12 +327,7 @@ class EventFlux extends EventFluxBase {
             ),
           );
         }
-        return;
-      }
-
-      if (autoReconnect && data.statusCode != 200) {
         _attemptReconnectIfNeeded(
-          _isExplicitDisconnect,
           autoReconnect,
           type,
           url,
@@ -355,7 +353,8 @@ class EventFlux extends EventFluxBase {
               if (dataLine.isEmpty) {
                 /// When the data line is empty, it indicates that the complete event set has been read.
                 /// The event is then added to the stream.
-                if (!_streamController!.isClosed) {
+                if (_streamController != null &&
+                    !_streamController!.isClosed) {
                   _streamController!.add(currentEventFluxData);
                 }
                 if (logReceivedData) {
@@ -374,7 +373,8 @@ class EventFlux extends EventFluxBase {
                 final sanitizedDataLine = dataLine.replaceAll('\u2028', '');
 
                 // Parsing each line through the regex.
-                Match match = lineRegex.firstMatch(sanitizedDataLine)!;
+                final match = _lineRegex.firstMatch(sanitizedDataLine);
+                if (match == null) return;
                 var field = match.group(1);
                 if (field!.isEmpty) {
                   return;
@@ -423,10 +423,12 @@ class EventFlux extends EventFluxBase {
               await _stop();
 
               // When the stream is closed, onClose can be called to execute a function.
-              if (onConnectionClose != null) onConnectionClose();
+              if (_onConnectionClose != null) {
+                _onConnectionClose!();
+                _onConnectionClose = null;
+              }
 
               _attemptReconnectIfNeeded(
-                _isExplicitDisconnect,
                 autoReconnect,
                 type,
                 url,
@@ -460,7 +462,6 @@ class EventFlux extends EventFluxBase {
               }
 
               _attemptReconnectIfNeeded(
-                _isExplicitDisconnect,
                 autoReconnect,
                 type,
                 url,
@@ -478,6 +479,11 @@ class EventFlux extends EventFluxBase {
           );
 
       if (data.statusCode == 200) {
+        _status = EventFluxStatus.connected;
+        if (_reconnectConfig != null) {
+          _interval = _reconnectConfig!.interval.inSeconds;
+          _maxAttempts = _reconnectConfig!.maxAttempts;
+        }
         onSuccessCallback(
           EventFluxResponse(
             status: EventFluxStatus.connected,
@@ -495,7 +501,6 @@ class EventFlux extends EventFluxBase {
       }
       await _stop();
       _attemptReconnectIfNeeded(
-        _isExplicitDisconnect,
         autoReconnect,
         type,
         url,
@@ -526,7 +531,12 @@ class EventFlux extends EventFluxBase {
   Future<EventFluxStatus> disconnect() async {
     _isExplicitDisconnect = true;
     _reconnectConfig = null;
-    return await _stop();
+    final status = await _stop();
+    if (_onConnectionClose != null) {
+      _onConnectionClose!();
+      _onConnectionClose = null;
+    }
+    return status;
   }
 
   /// Internal method to handle disconnection.
@@ -536,10 +546,14 @@ class EventFlux extends EventFluxBase {
   Future<EventFluxStatus> _stop() async {
     eventFluxLog('Disconnecting', LogEvent.info, _tag);
     try {
-      _streamSubscription?.cancel();
-      _streamController?.close();
+      // Null out references first to prevent callbacks from using stale state.
+      final sub = _streamSubscription;
+      final ctrl = _streamController;
+      _streamSubscription = null;
+      _streamController = null;
+      sub?.cancel();
+      ctrl?.close();
       client?.close();
-      Future.delayed(const Duration(seconds: 1), () {});
       eventFluxLog('Disconnected', LogEvent.info, _tag);
       _status = EventFluxStatus.disconnected;
       return _status;
@@ -555,9 +569,6 @@ class EventFlux extends EventFluxBase {
   /// when `autoReconnect` is enabled. It waits for a specified duration (2 seconds),
   /// before attempting to reconnect.
   void _attemptReconnectIfNeeded(
-    /// If _isExplicitDisconnect is `true`, it does not attempt to reconnect. This is to prevent reconnection if the user has explicitly disconnected.
-    /// This is an internal variable, this doen't mean anything to the user.
-    bool isExplicitDisconnect,
     bool autoReconnect,
     EventFluxConnectionType type,
     String url,
@@ -572,14 +583,14 @@ class EventFlux extends EventFluxBase {
     WebConfig? webConfig,
   }) async {
     /// If autoReconnect is enabled and the user has not explicitly disconnected, it attempts to reconnect.
-    if (autoReconnect && !isExplicitDisconnect && _reconnectConfig != null) {
+    if (autoReconnect && !_isExplicitDisconnect && _reconnectConfig != null) {
       /// If the reconnection mode is linear, the interval remains constant.
 
       /// If the maximum attempts is -1, it means there is no limit to the number of attempts.
       if (_maxAttempts != -1) {
         /// If the maximum attempts are exhausted, it stops the connection.
         if (_maxAttempts == 0) {
-          _stop();
+          await _stop();
           return;
         }
 
@@ -592,7 +603,7 @@ class EventFlux extends EventFluxBase {
         header = await _reconnectConfig!.reconnectHeader!();
       }
 
-      if (isExplicitDisconnect) {
+      if (_isExplicitDisconnect) {
         eventFluxLog("Explicit disconnection. Aborting retry attempts",
             LogEvent.info, _tag);
         return; // Exit early if an explicit disconnect occurred.
@@ -603,7 +614,7 @@ class EventFlux extends EventFluxBase {
 
           /// It waits for the specified constant interval before attempting to reconnect.
           await Future.delayed(_reconnectConfig!.interval, () {
-            if (!isExplicitDisconnect) {
+            if (!_isExplicitDisconnect) {
               eventFluxLog("Trying again in ${_interval.toString()} seconds",
                   LogEvent.reconnect, _tag);
               _status = EventFluxStatus.connectionInitiated;
@@ -629,10 +640,10 @@ class EventFlux extends EventFluxBase {
 
           /// It waits for the specified interval before attempting to reconnect.
           await Future.delayed(Duration(seconds: _interval), () {
-            _interval = _interval * 2;
-            if (!isExplicitDisconnect) {
+            if (!_isExplicitDisconnect) {
               eventFluxLog("Trying again in ${_interval.toString()} seconds",
                   LogEvent.reconnect, _tag);
+              _interval = _interval * 2;
 
               _status = EventFluxStatus.connectionInitiated;
               _start(

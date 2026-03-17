@@ -634,6 +634,209 @@ void main() {
       });
     }
 
+    test('status 201 triggers onError, does not call onSuccessCallback', () {
+      final response = StreamedResponse(
+        Stream.value([]),
+        201,
+        headers: {'content-type': 'text/event-stream'},
+        reasonPhrase: 'Created',
+      );
+
+      when(mockHttpClient.send(any))
+          .thenAnswer((_) => Future.value(response));
+
+      fakeAsync((async) {
+        bool successCalled = false;
+        bool errorCaught = false;
+        eventFlux.connect(
+          EventFluxConnectionType.get,
+          testUrl,
+          httpClient: mockHttpClient,
+          onSuccessCallback: (_) {
+            successCalled = true;
+          },
+          onError: (error) {
+            errorCaught = true;
+            expect(error.statusCode, 201);
+          },
+        );
+        async.flushMicrotasks();
+
+        expect(successCalled, false);
+        expect(errorCaught, true);
+      });
+    });
+
+    test('connect on already-connected instance is a no-op', () {
+      final controller = StreamController<List<int>>();
+      final response = StreamedResponse(
+        controller.stream,
+        200,
+        headers: {'content-type': 'text/event-stream'},
+      );
+
+      when(mockHttpClient.send(any))
+          .thenAnswer((_) => Future.value(response));
+
+      fakeAsync((async) {
+        int successCount = 0;
+        eventFlux.connect(
+          EventFluxConnectionType.get,
+          testUrl,
+          httpClient: mockHttpClient,
+          onSuccessCallback: (_) {
+            successCount++;
+          },
+        );
+        async.flushMicrotasks();
+
+        // Second connect call should be a no-op
+        eventFlux.connect(
+          EventFluxConnectionType.get,
+          testUrl,
+          httpClient: mockHttpClient,
+          onSuccessCallback: (_) {
+            successCount++;
+          },
+        );
+        async.flushMicrotasks();
+
+        expect(successCount, 1);
+      });
+    });
+
+    test(
+        'onConnectionClose fires exactly once when stream closes then disconnect is called',
+        () {
+      final controller = StreamController<List<int>>();
+      final response = StreamedResponse(
+        controller.stream,
+        200,
+        headers: {'content-type': 'text/event-stream'},
+      );
+
+      when(mockHttpClient.send(any))
+          .thenAnswer((_) => Future.value(response));
+
+      fakeAsync((async) {
+        int closeCount = 0;
+        eventFlux.connect(
+          EventFluxConnectionType.get,
+          testUrl,
+          httpClient: mockHttpClient,
+          onConnectionClose: () {
+            closeCount++;
+          },
+          onSuccessCallback: (_) {},
+        );
+        async.flushMicrotasks();
+
+        // Stream closes naturally
+        controller.close();
+        async.flushMicrotasks();
+
+        // User calls disconnect after stream already closed
+        eventFlux.disconnect();
+        async.flushMicrotasks();
+
+        expect(closeCount, 1);
+      });
+    });
+
+    test(
+        'exponential backoff interval resets after successful reconnection',
+        () {
+      final controller1 = StreamController<List<int>>();
+      final controller2 = StreamController<List<int>>();
+      final controller3 = StreamController<List<int>>();
+      final response1 = StreamedResponse(controller1.stream, 200);
+      final response2 = StreamedResponse(controller2.stream, 200);
+      final response3 = StreamedResponse(controller3.stream, 200);
+
+      final responses = [response1, response2, response3];
+      when(mockHttpClient.send(any))
+          .thenAnswer((_) => Future.value(responses.removeAt(0)));
+
+      fakeAsync((async) {
+        int successCount = 0;
+        eventFlux.connect(
+          EventFluxConnectionType.get,
+          testUrl,
+          httpClient: mockHttpClient,
+          autoReconnect: true,
+          reconnectConfig: ReconnectConfig(
+            mode: ReconnectMode.exponential,
+            interval: const Duration(seconds: 1),
+            maxAttempts: -1,
+          ),
+          onSuccessCallback: (_) {
+            successCount++;
+          },
+        );
+        async.flushMicrotasks();
+        expect(successCount, 1);
+
+        // First drop: should reconnect after 1s (initial interval)
+        controller1.close();
+        async.elapse(const Duration(seconds: 1));
+        async.flushMicrotasks();
+        expect(successCount, 2);
+
+        // Second drop: interval was reset, should reconnect after 1s again (not 2s)
+        controller2.close();
+        async.elapse(const Duration(seconds: 1));
+        async.flushMicrotasks();
+        expect(successCount, 3);
+      });
+    });
+
+    test('disconnect during reconnect delay aborts reconnection', () {
+      final controller = StreamController<List<int>>();
+      final response = StreamedResponse(
+        controller.stream,
+        200,
+        headers: {'content-type': 'text/event-stream'},
+      );
+
+      int sendCount = 0;
+      when(mockHttpClient.send(any)).thenAnswer((_) {
+        sendCount++;
+        return Future.value(response);
+      });
+
+      fakeAsync((async) {
+        eventFlux.connect(
+          EventFluxConnectionType.get,
+          testUrl,
+          httpClient: mockHttpClient,
+          autoReconnect: true,
+          reconnectConfig: ReconnectConfig(
+            mode: ReconnectMode.linear,
+            interval: const Duration(seconds: 5),
+            maxAttempts: 3,
+          ),
+          onSuccessCallback: (_) {},
+        );
+        async.flushMicrotasks();
+        expect(sendCount, 1);
+
+        // Close the stream to trigger reconnection
+        controller.close();
+        async.flushMicrotasks();
+
+        // Disconnect during the reconnect delay
+        eventFlux.disconnect();
+        async.flushMicrotasks();
+
+        // Elapse past the reconnect interval - should NOT reconnect
+        async.elapse(const Duration(seconds: 10));
+        async.flushMicrotasks();
+
+        // Should still only have the original send
+        expect(sendCount, 1);
+      });
+    });
+
     group('disconnect', () {
       test('explicit disconnect prevents reconnection for linear mode', () {
         final controller = StreamController<List<int>>();

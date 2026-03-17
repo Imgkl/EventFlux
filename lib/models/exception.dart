@@ -44,4 +44,16 @@ class EventFluxException implements Exception {
     this.originalError,
     this.stackTrace,
   });
+
+  @override
+  String toString() {
+    final buffer = StringBuffer('EventFluxException');
+    if (statusCode != null) {
+      buffer.write(' [$statusCode');
+      if (reasonPhrase != null) buffer.write(' $reasonPhrase');
+      buffer.write(']');
+    }
+    if (message != null) buffer.write(': $message');
+    return buffer.toString();
+  }
 }
