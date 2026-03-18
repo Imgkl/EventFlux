@@ -38,10 +38,17 @@ class EventFluxData {
   String event = '';
 
   /// Event Data
-  String data = '';
+  String _data = '';
+  String get data => _data;
+  set data(String value) {
+    _data = value;
+    _jsonCached = false;
+    _cachedJson = null;
+  }
 
   /// Constructs an instance of `EventFluxData` with given id, event, and data.
-  EventFluxData({required this.data, required this.id, required this.event});
+  EventFluxData({required String data, required this.id, required this.event})
+      : _data = data;
   EventFluxData.fromData(String data) {
     final lines = data.split("\n");
     if (lines.length < 3) {
@@ -62,9 +69,21 @@ class EventFluxData {
     }
     id = lines[0].substring(idIdx + 3);
     event = lines[1].substring(eventIdx + 6);
-    this.data = lines[2].substring(dataIdx + 5);
+    _data = lines[2].substring(dataIdx + 5);
   }
 
+  dynamic _cachedJson;
+  bool _jsonCached = false;
+
   /// Parses the [data] field as JSON and returns the decoded result.
-  dynamic get json => jsonDecode(data);
+  ///
+  /// The result is cached; subsequent accesses return the same object
+  /// without re-parsing. The cache is invalidated when [data] is set.
+  dynamic get json {
+    if (!_jsonCached) {
+      _cachedJson = jsonDecode(data);
+      _jsonCached = true;
+    }
+    return _cachedJson;
+  }
 }

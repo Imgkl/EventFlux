@@ -368,6 +368,19 @@ Returns a new independent `EventFlux` instance for managing parallel SSE connect
 
 </details>
 
+## Benchmarks
+
+v3 SSE parsing performance compared against v2.2.1 and [flutter_client_sse](https://pub.dev/packages/flutter_client_sse) 2.0.3.
+
+| Operation | v2.2.1 (μs) | v3.0.0 (μs) | flutter_client_sse (μs) | Best |
+|---|--:|--:|--:|---|
+| SSE Parser (1000 events × 20 lines) | 5,274 | 5,375 | 5,756 | v2 |
+| SSE Parser (100 events × 200 lines) | 11,856 | **4,967** | 19,872 | **v3** |
+| fromData (10K ops) | 3,618 | **1,172** | 1,658 | **v3** |
+| Comment/Heartbeat (10K lines) | 649 | **565** | 643 | **v3** |
+| Single Large Payload (100 × 10KB) | 1,150 | 1,175 | **892** | fcs |
+| Mixed Workload (~5K lines) | 2,203 | **1,623** | 2,911 | **v3** |
+
 ## Contributors 💜
 
 <a href="https://github.com/Imgkl"><img src="https://github.com/Imgkl.png" width="60" style="border-radius:50%" alt="Imgkl"/></a>

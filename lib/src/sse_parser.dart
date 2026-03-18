@@ -38,13 +38,15 @@ class SseParser {
   }) {
     if (dataLine.isEmpty) {
       final completed = _current;
-      if (logReceivedData) {
-        eventFluxLog(completed.data.toString(), LogEvent.info, tag);
+      // Extract accumulated data, stripping trailing '\n' (per SSE spec)
+      var accumulated = _dataBuffer.toString();
+      if (accumulated.endsWith('\n')) {
+        accumulated = accumulated.substring(0, accumulated.length - 1);
       }
-      // Strip trailing '\n' before dispatch (per SSE spec)
-      if (completed.data.endsWith('\n')) {
-        completed.data =
-            completed.data.substring(0, completed.data.length - 1);
+      completed.data = accumulated;
+      _dataBuffer.clear();
+      if (logReceivedData) {
+        eventFluxLog(completed.data, LogEvent.info, tag);
       }
       _current = EventFluxData(data: '', id: '', event: '');
       return completed;
@@ -52,7 +54,7 @@ class SseParser {
 
     try {
       // Remove the Unicode line separator that breaks the regex parse.
-      final sanitizedDataLine = dataLine.replaceAll(RegExp('[\u2028\u2029]'), '');
+      final sanitizedDataLine = dataLine.replaceAll(_unicodeSeparatorRegex, '');
 
       final match = _lineRegex.firstMatch(sanitizedDataLine);
       if (match == null) return null;
@@ -67,7 +69,8 @@ class SseParser {
           _current.event = value;
           break;
         case 'data':
-          _current.data = '${_current.data}$value\n';
+          _dataBuffer.write(value);
+          _dataBuffer.writeCharCode(0x0A);
           break;
         case 'id':
           // Per WHATWG spec: ignore if value contains NULL character
@@ -103,6 +106,7 @@ class SseParser {
   /// [_serverRetryInterval] is cleared (per-connection).
   void reset() {
     _current = EventFluxData(data: '', id: '', event: '');
+    _dataBuffer.clear();
     _serverRetryInterval = null;
   }
 
