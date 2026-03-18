@@ -99,10 +99,10 @@ class _SSEDemoPageState extends State<SSEDemoPage> {
         mode: ReconnectMode.exponential,
         interval: const Duration(seconds: 2),
         maxAttempts: 5,
-        onReconnect: () {
+        onReconnect: (attempt, delay) {
           if (mounted) {
             setState(
-                () => _status = EventFluxStatus.connectionInitiated);
+                () => _status = EventFluxStatus.reconnecting);
           }
         },
       ),
@@ -110,6 +110,7 @@ class _SSEDemoPageState extends State<SSEDemoPage> {
           ? WebConfig(
               mode: WebConfigRequestMode.cors,
               credentials: WebConfigRequestCredentials.omit,
+              cache: WebConfigRequestCache.noStore,
             )
           : null,
     );
@@ -126,6 +127,7 @@ class _SSEDemoPageState extends State<SSEDemoPage> {
   Color get _statusColor => switch (_status) {
         EventFluxStatus.connected => Colors.green,
         EventFluxStatus.connectionInitiated => Colors.orange,
+        EventFluxStatus.reconnecting => Colors.orange,
         EventFluxStatus.error => Colors.red,
         EventFluxStatus.disconnected => Colors.grey,
       };
@@ -133,6 +135,7 @@ class _SSEDemoPageState extends State<SSEDemoPage> {
   String get _statusLabel => switch (_status) {
         EventFluxStatus.connected => 'Connected',
         EventFluxStatus.connectionInitiated => 'Connecting…',
+        EventFluxStatus.reconnecting => 'Reconnecting…',
         EventFluxStatus.error => 'Error',
         EventFluxStatus.disconnected => 'Disconnected',
       };

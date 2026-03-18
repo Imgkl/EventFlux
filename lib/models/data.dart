@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Represents the data structure for an EventFlux event.
 ///
 /// `EventFluxData` is used to store and represent the data associated with
@@ -62,4 +64,7 @@ class EventFluxData {
     event = eventParts[1];
     this.data = dataParts[1];
   }
+
+  /// Parses the [data] field as JSON and returns the decoded result.
+  dynamic get json => jsonDecode(data);
 }

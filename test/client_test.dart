@@ -1,13 +1,25 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:eventflux/eventflux.dart';
+import 'package:eventflux/src/reconnect_strategy.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:http/http.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
 import 'mocks.mocks.dart';
+
+/// A [Random] that always returns 0 from [nextDouble], eliminating jitter.
+class _ZeroRandom implements Random {
+  @override
+  double nextDouble() => 0.0;
+  @override
+  int nextInt(int max) => 0;
+  @override
+  bool nextBool() => false;
+}
 
 void main() {
   late MockHttpClientAdapter mockHttpClient;
@@ -17,11 +29,18 @@ void main() {
   setUp(() {
     mockHttpClient = MockHttpClientAdapter();
     eventFlux = EventFlux.spawn();
+    // Eliminate jitter in tests for deterministic timing
+    ReconnectStrategy.random = _ZeroRandom();
+  });
+
+  tearDown(() {
+    ReconnectStrategy.random = Random();
   });
 
   group('EventFlux', () {
     test('connect with GET', () {
-      final response = StreamedResponse(Stream.value([]), 200);
+      final response = StreamedResponse(Stream.value([]), 200,
+          headers: {'content-type': 'text/event-stream'});
       when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       fakeAsync((async) {
@@ -39,7 +58,8 @@ void main() {
     });
 
     test('connect with POST', () {
-      final response = StreamedResponse(Stream.value([]), 200);
+      final response = StreamedResponse(Stream.value([]), 200,
+          headers: {'content-type': 'text/event-stream'});
       when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       fakeAsync((async) {
@@ -92,8 +112,8 @@ void main() {
             expect(
                 mappedStream,
                 emitsInOrder([
-                  'test message\n',
-                  'test message 2\n',
+                  'test message',
+                  'test message 2',
                 ]));
             async.flushMicrotasks();
           });
@@ -265,6 +285,7 @@ void main() {
             final request = call.captured.single as Request;
             expect(request.headers, {
               'Accept': 'text/event-stream',
+              'Cache-Control': 'no-store',
             });
           });
 
@@ -287,6 +308,7 @@ void main() {
             final request = call.captured.single as MultipartRequest;
             expect(request.headers, {
               'Accept': 'text/event-stream',
+              'Cache-Control': 'no-store',
             });
           });
 
@@ -309,6 +331,7 @@ void main() {
             final request = call.captured.single as MultipartRequest;
             expect(request.headers, {
               'Accept': 'text/event-stream',
+              'Cache-Control': 'no-store',
             });
           });
         });
@@ -381,13 +404,13 @@ void main() {
             async.flushMicrotasks();
 
             controller.add(utf8.encode('data:test message\n\n'));
-            expect(mappedStream, emits('test message\n'));
+            expect(mappedStream, emits('test message'));
             controller.close();
             async.elapse(const Duration(milliseconds: 100));
 
             async.flushMicrotasks();
             controller2.add(utf8.encode('data:test message 2\n\n'));
-            expect(mappedStream, emits('test message 2\n'));
+            expect(mappedStream, emits('test message 2'));
             controller2.close();
 
             async.flushMicrotasks();
@@ -432,13 +455,13 @@ void main() {
             async.flushMicrotasks();
 
             controller.add(utf8.encode('data:test message\n\n'));
-            expect(mappedStream, emits('test message\n'));
+            expect(mappedStream, emits('test message'));
             controller.close();
             async.elapse(const Duration(seconds: 1));
 
             async.flushMicrotasks();
             controller2.add(utf8.encode('data:test message 2\n\n'));
-            expect(mappedStream, emits('test message 2\n'));
+            expect(mappedStream, emits('test message 2'));
             controller2.close();
 
             async.flushMicrotasks();
@@ -468,7 +491,7 @@ void main() {
                 mode: ReconnectMode.linear,
                 interval: const Duration(milliseconds: 100),
                 maxAttempts: 2,
-                onReconnect: () {
+                onReconnect: (attempt, delay) {
                   connectionAttempts++;
                 },
               ),
@@ -509,7 +532,7 @@ void main() {
                 mode: ReconnectMode.exponential,
                 interval: const Duration(seconds: 1),
                 maxAttempts: 3,
-                onReconnect: () {
+                onReconnect: (attempt, delay) {
                   connectionAttempts++;
                 },
               ),
@@ -749,9 +772,12 @@ void main() {
       final controller1 = StreamController<List<int>>();
       final controller2 = StreamController<List<int>>();
       final controller3 = StreamController<List<int>>();
-      final response1 = StreamedResponse(controller1.stream, 200);
-      final response2 = StreamedResponse(controller2.stream, 200);
-      final response3 = StreamedResponse(controller3.stream, 200);
+      final response1 = StreamedResponse(controller1.stream, 200,
+          headers: {'content-type': 'text/event-stream'});
+      final response2 = StreamedResponse(controller2.stream, 200,
+          headers: {'content-type': 'text/event-stream'});
+      final response3 = StreamedResponse(controller3.stream, 200,
+          headers: {'content-type': 'text/event-stream'});
 
       final responses = [response1, response2, response3];
       when(mockHttpClient.send(any))
@@ -860,7 +886,7 @@ void main() {
               mode: ReconnectMode.linear,
               interval: const Duration(milliseconds: 100),
               maxAttempts: 2,
-              onReconnect: () {
+              onReconnect: (attempt, delay) {
                 reconnectAttempts++;
               },
             ),
@@ -898,7 +924,7 @@ void main() {
               mode: ReconnectMode.exponential,
               interval: const Duration(seconds: 1),
               maxAttempts: 2,
-              onReconnect: () {
+              onReconnect: (attempt, delay) {
                 reconnectAttempts++;
               },
             ),

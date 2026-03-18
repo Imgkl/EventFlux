@@ -10,9 +10,15 @@ import 'package:eventflux/http_client_adapter.dart';
 import 'package:eventflux/models/base.dart';
 import 'package:eventflux/models/data.dart';
 import 'package:eventflux/models/exception.dart';
+import 'package:eventflux/models/interceptor.dart';
 import 'package:eventflux/models/reconnect.dart';
 import 'package:eventflux/models/response.dart';
 import 'package:eventflux/models/web_config/web_config.dart';
+import 'package:eventflux/src/connection_config.dart';
+import 'package:eventflux/src/interceptor_runner.dart';
+import 'package:eventflux/src/reconnect_strategy.dart';
+import 'package:eventflux/src/request_builder.dart';
+import 'package:eventflux/src/sse_parser.dart';
 import 'package:eventflux/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
@@ -32,110 +38,24 @@ class EventFlux extends EventFluxBase {
   StreamController<EventFluxData>? _streamController;
   bool _isExplicitDisconnect = false;
   StreamSubscription? _streamSubscription;
-  ReconnectConfig? _reconnectConfig;
   EventFluxStatus _status = EventFluxStatus.disconnected;
-  int _maxAttempts = 0;
-  int _interval = 0;
   String? _tag;
   Function()? _onConnectionClose;
-  static final RegExp _lineRegex = RegExp(r'^([^:]*)(?::)?(?: )?(.*)?$');
+  Timer? _idleTimer;
+
+  final SseParser _sseParser = SseParser();
+  final ReconnectStrategy _reconnectStrategy = ReconnectStrategy();
 
   /// Factory method for spawning new instances of `EventFlux`.
-  ///
-  /// This method creates and returns a new instance of `EventFlux`. It's useful
-  /// for scenarios where multiple, separate `EventFlux` instances are needed,
-  /// each operating independently from one another. This allows for different
-  /// SSE connections or functionalities to be managed separately within the same application.
-  ///
-  /// Returns:
-  ///   - A new `EventFlux` instance.
-  ///
-  /// Usage Example:
-  /// ```dart
-  /// EventFlux eventFluxInstance1 = EventFlux.spawn();
-  /// EventFlux eventFluxInstance2 = EventFlux.spawn();
-  ///
-  ///
-  /// eventFluxInstance1.connect(/* connection parameters */);
-  /// eventFluxInstance2.connect(/* connection parameters */);
-  /// ```
-  ///
-  /// This method is ideal when distinct, isolated instances of `EventFlux` are required,
-  /// offering more control over multiple SSE connections.
   static EventFlux spawn() {
     return EventFlux._();
   }
 
-  /// Establishes a connection to a server-sent event (SSE) stream.
-  ///
-  /// This method sets up a connection to an SSE stream based on the provided URL and connection type.
-  /// It handles the data stream, manages errors, and implements an auto-reconnection mechanism.
-  ///
-  /// Parameters:
-  ///   - `type`: The type of HTTP connection to be used (GET or POST).
-  ///   - `url`: The URL of the SSE stream to connect to.
-  ///   - `header`: HTTP headers for the request. Defaults to accepting 'text/event-stream'.
-  ///   - `onConnectionClose`: Callback function that is called when the connection is closed.
-  ///   - `autoReconnect`: Boolean value that determines if the connection should be
-  ///     automatically reestablished when interrupted. Defaults to `false`.
-  ///   - `reconnectConfig`: Optional configuration for reconnection attempts. Required if `autoReconnect` is enabled.
-  ///   - `onSuccessCallback`: Required callback function that is called upon a successful
-  ///     connection. It provides an `EventFluxResponse` object containing the connection status and data stream.
-  ///   - `onError`: Callback function for handling errors that occur during the connection
-  ///     or data streaming process. It receives an `EventFluxException` object.
-  ///   - `body`: Optional body for POST request types.
-  ///   - `tag`: Optional tag to identify the connection.
-  ///   - `logReceivedData`: Boolean value that determines if received data should be logged. Defaults to `false`.
-  ///   - `files`: Optional list of files to be sent with the request.
-  ///   - `multipartRequest`: Boolean value that determines if the request is a multipart request. Defaults to `false`.
-  ///   - `httpClient`: Optional HTTP client adapter to be used for the connection.
-  ///
-  ///
-  /// The method initializes an HTTP client and a StreamController for managing the SSE data.
-  /// It creates an HTTP request based on the specified `type`, `url`, `header`, and `body`.
-  /// Upon receiving the response, it checks the status code for success (200) and proceeds
-  /// to listen to the stream. It parses each line of the incoming data to construct `EventFluxData` objects
-  /// which are then added to the stream controller.
-  ///
-  /// The method includes error handling within the stream's `onError` callback, which involves
-  /// invoking the provided `onError` function, adding the error to the stream controller, and
-  /// potentially triggering a reconnection attempt if `autoReconnect` is `true`.
-  ///
-  /// In the case of stream closure (`onDone`), it disconnects the client, triggers the `onConnectionClose`
-  /// callback, and, if `autoReconnect` is enabled, schedules a reconnection attempt after a delay.
-  ///
-  /// Usage Example:
-  /// ```dart
-  /// EventFlux eventFlux = EventFlux.instance;
-  /// eventFlux.connect(
-  ///   EventFluxConnectionType.get,
-  ///   'https://example.com/events',
-  ///   onSuccessCallback: (response) {
-  ///     response.stream?.listen((data) {
-  ///       // Handle incoming data
-  ///     });
-  ///   },
-  ///   onError: (exception) {
-  ///     // Handle error
-  ///   },
-  ///   autoReconnect: true
-  ///   reconnectConfig: ReconnectConfig(
-  ///   mode: ReconnectMode.linear || ReconnectMode.exponential,
-  ///   interval: const Duration(seconds: 2),
-  ///   maxAttempts: 5,
-  ///   reconnectCallback: () {},
-  /// ),
-  /// );
-  /// ```
-  ///
-  /// This method is crucial for establishing and maintaining a stable connection to an SSE stream,
-  /// handling data and errors efficiently, and providing a resilient connection experience with
-  /// its auto-reconnect capability.
   @override
   void connect(
     EventFluxConnectionType type,
     String url, {
-    Map<String, String> header = const {'Accept': 'text/event-stream'},
+    Map<String, String> header = const {'Accept': 'text/event-stream', 'Cache-Control': 'no-store'},
     Function()? onConnectionClose,
     bool autoReconnect = false,
     ReconnectConfig? reconnectConfig,
@@ -147,21 +67,18 @@ class EventFlux extends EventFluxBase {
     bool logReceivedData = false,
     List<MultipartFile>? files,
     bool multipartRequest = false,
-
-    /// Optional web config to be used for the connection. Must be provided on web.
-    /// Will be ignored on non-web platforms.
     WebConfig? webConfig,
+    List<EventFluxInterceptor>? interceptors,
+    Future<void>? abortTrigger,
   }) {
 
     if (kIsWeb && webConfig == null) {
       throw ArgumentError('WebConfig must be provided on web');
     }
     // This check prevents redundant connection requests when a connection is already in progress.
-    // This does not prevent reconnection attempts if autoReconnect is enabled.
-
-    // When using `spawn`, the `_status` is `disconnected` by default. so this check will always be false.
     if (_status == EventFluxStatus.connected ||
-        _status == EventFluxStatus.connectionInitiated) {
+        _status == EventFluxStatus.connectionInitiated ||
+        _status == EventFluxStatus.reconnecting) {
       eventFluxLog('Already Connection in Progress, Skipping redundant request',
           LogEvent.info, _tag);
       return;
@@ -183,133 +100,108 @@ class EventFlux extends EventFluxBase {
 
     eventFluxLog("$_status", LogEvent.info, _tag);
 
-    /// If autoReconnect is enabled, set the maximum attempts and interval based on the reconnect configuration.
     if (reconnectConfig != null) {
-      _reconnectConfig = reconnectConfig;
-      _maxAttempts = reconnectConfig.maxAttempts;
-      _interval = reconnectConfig.interval.inSeconds;
+      _reconnectStrategy.initialize(reconnectConfig);
     }
 
     _isExplicitDisconnect = false;
 
-    _start(
-      type,
-      url,
+    final config = ConnectionConfig(
+      type: type,
+      url: url,
       header: header,
       autoReconnect: autoReconnect,
+      reconnectConfig: reconnectConfig,
       onSuccessCallback: onSuccessCallback,
       onError: onError,
       onConnectionClose: onConnectionClose,
-      body: body,
       httpClient: httpClient,
+      body: body,
+      tag: tag,
       logReceivedData: logReceivedData,
       files: files,
       multipartRequest: multipartRequest,
       webConfig: webConfig,
+      interceptors: interceptors,
+      abortTrigger: abortTrigger,
     );
+
+    _start(config);
   }
 
   /// An internal method to handle the connection process.
-  /// this is abstracted out to set the `_isExplicitDisconnect` variable to `false` before connecting.
-  void _start(
-    EventFluxConnectionType type,
-    String url, {
-    Map<String, String> header = const {'Accept': 'text/event-stream'},
-    Function()? onConnectionClose,
-    bool autoReconnect = false,
-    required Function(EventFluxResponse?) onSuccessCallback,
-    Function(EventFluxException)? onError,
-    Map<String, dynamic>? body,
-    HttpClientAdapter? httpClient,
-    bool logReceivedData = false,
-    List<MultipartFile>? files,
-    bool multipartRequest = false,
-    WebConfig? webConfig,
-  }) {
-    _onConnectionClose = onConnectionClose;
+  void _start(ConnectionConfig config) async {
+    _onConnectionClose = config.onConnectionClose;
 
-    /// Initalise variables
-    /// Create a new HTTP client based on the platform
-    /// Uses and internal http client if no http client adapter is present
-    if (httpClient == null) {
+    /// Create a new HTTP client based on the platform if no adapter is present.
+    if (config.httpClient == null) {
       client =
-          kIsWeb ? FetchClientExtension.fromWebConfig(webConfig!) : Client();
+          kIsWeb ? FetchClientExtension.fromWebConfig(config.webConfig!) : Client();
     }
 
-    /// Set `_isExplicitDisconnect` to `false` before connecting.
     _isExplicitDisconnect = false;
 
     _streamController = StreamController<EventFluxData>();
-    EventFluxData currentEventFluxData =
-        EventFluxData(data: '', id: '', event: '');
+    _sseParser.reset();
 
-    BaseRequest request = switch ((multipartRequest, files?.isNotEmpty)) {
-      (true, _) || (_, true) => () {
-          final request = MultipartRequest(
-            type == EventFluxConnectionType.get ? 'GET' : 'POST',
-            Uri.parse(url),
-          );
-          if (header.isNotEmpty) {
-            request.headers.addAll(header);
-          }
-          if (body != null) {
-            request.fields.addAll(
-              body.map(
-                (key, value) => MapEntry(key, value),
-              ),
-            );
-          }
-          if (files != null) {
-            for (final file in files) {
-              request.files.add(file);
-            }
-          }
-          return request;
-        }(),
-      _ => () {
-          final request = Request(
-            type == EventFluxConnectionType.get ? 'GET' : 'POST',
-            Uri.parse(url),
-          );
-          if (header.isNotEmpty) {
-            request.headers.addAll(header);
-          }
-          if (body != null) {
-            request.body = jsonEncode(body);
-          }
-          return request;
-        }(),
-    };
+    // On web, remove Cache-Control from request headers. It is not a
+    // CORS-safelisted header, so it forces a preflight that most SSE
+    // servers reject. On web, caching is controlled by WebConfig.cache
+    // via the Fetch API's RequestCache mode instead.
+    if (kIsWeb) {
+      final h = Map<String, String>.from(config.header);
+      h.remove('Cache-Control');
+      h.remove('cache-control');
+      config = config.copyWithHeader(h);
+    }
+
+    BaseRequest request = RequestBuilder.build(config);
 
     eventFluxLog('Connection Initiated', LogEvent.info, _tag);
 
+    // Run onRequest interceptor chain
+    if (config.interceptors != null) {
+      try {
+        request = await InterceptorRunner.runOnRequest(
+            request, config.interceptors);
+      } on EventFluxException catch (e) {
+        await InterceptorRunner.runOnError(
+            e, config.interceptors, config.onError);
+        _streamController?.close();
+        return;
+      }
+    }
+
     Future<StreamedResponse> response;
 
-    if (httpClient != null) {
-      // Use external HTTP client
-      response = httpClient.send(request);
+    if (config.httpClient != null) {
+      response = config.httpClient!.send(request);
     } else {
-      // Use internal HTTP client
       response = client!.send(request);
     }
 
     response.then((data) async {
-      eventFluxLog(
-        'Connected',
-        LogEvent.info,
-        _tag,
-      );
+        eventFluxLog(
+          'Connected',
+          LogEvent.info,
+          _tag,
+        );
 
-      eventFluxLog(
-        "Status code: ${data.statusCode.toString()}",
-        LogEvent.info,
-        _tag,
-      );
+        eventFluxLog(
+          "Status code: ${data.statusCode.toString()}",
+          LogEvent.info,
+          _tag,
+        );
 
-      if (data.statusCode != 200) {
-        _status = EventFluxStatus.error;
-        String responseBody = await data.stream.bytesToString();
-        if (onError != null) {
+        // Run onResponse interceptor chain
+        if (config.interceptors != null) {
+          data = await InterceptorRunner.runOnResponse(
+              data, config.interceptors);
+        }
+
+        if (data.statusCode != 200) {
+          _status = EventFluxStatus.error;
+          String responseBody = await data.stream.bytesToString();
           Map<String, dynamic>? errorDetails;
           try {
             errorDetails = jsonDecode(responseBody);
@@ -317,7 +209,7 @@ class EventFlux extends EventFluxBase {
             errorDetails = {'rawBody': responseBody};
           }
 
-          onError(
+          await InterceptorRunner.runOnError(
             EventFluxException(
               statusCode: data.statusCode,
               reasonPhrase: data.reasonPhrase,
@@ -325,212 +217,147 @@ class EventFlux extends EventFluxBase {
                   ? data.reasonPhrase
                   : errorDetails.toString(),
             ),
+            config.interceptors,
+            config.onError,
           );
+
+          // Error classification: only reconnect on 5xx, 408, 429
+          final shouldRetry = data.statusCode >= 500 ||
+              data.statusCode == 408 ||
+              data.statusCode == 429;
+          if (shouldRetry) {
+            _scheduleReconnect(config);
+          }
+          return;
         }
-        _attemptReconnectIfNeeded(
-          autoReconnect,
-          type,
-          url,
-          header,
-          onSuccessCallback,
-          onError: onError,
-          onConnectionClose: onConnectionClose,
-          httpClient: httpClient,
-          body: body,
-          files: files,
-          multipartRequest: multipartRequest,
-          webConfig: webConfig,
+
+        // Content-Type validation: must contain text/event-stream
+        final contentType = data.headers['content-type'] ?? '';
+        if (!contentType.contains('text/event-stream')) {
+          await InterceptorRunner.runOnError(
+            EventFluxException(
+              statusCode: data.statusCode,
+              message:
+                  'Invalid content-type: expected text/event-stream, got $contentType',
+            ),
+            config.interceptors,
+            config.onError,
+          );
+          return;
+        }
+
+        // Guarded zone for .listen() — defense-in-depth for orphaned stream
+        // errors that arrive after subscription cancellation on non-web platforms.
+        final guardedZone = Zone.current.fork(
+          specification: ZoneSpecification(
+            handleUncaughtError: (self, parent, zone, error, stackTrace) {
+              if (_isExplicitDisconnect) return;
+              eventFluxLog(
+                  'Unhandled stream error: $error', LogEvent.error, _tag);
+            },
+          ),
         );
-        return;
-      }
 
-      // Applying transforms and listening to it
-      _streamSubscription = data.stream
-          .transform(const Utf8Decoder())
-          .transform(const LineSplitter())
-          .listen(
-            (dataLine) {
-              if (dataLine.isEmpty) {
-                /// When the data line is empty, it indicates that the complete event set has been read.
-                /// The event is then added to the stream.
-                if (_streamController != null &&
+        // Applying transforms and listening to it
+        _streamSubscription = guardedZone.run(() => data.stream
+            .transform(const Utf8Decoder())
+            .transform(const LineSplitter())
+            .listen(
+              (dataLine) {
+                // Reset idle timer on every data line (comments count as heartbeats)
+                _resetIdleTimer(config);
+
+                final event = _sseParser.processLine(
+                  dataLine,
+                  tag: _tag,
+                  logReceivedData: config.logReceivedData,
+                  onError: config.onError,
+                );
+
+                // Forward server retry interval to reconnect strategy
+                final serverRetry = _sseParser.serverRetryInterval;
+                if (serverRetry != null) {
+                  _reconnectStrategy.updateRetryInterval(serverRetry);
+                }
+
+                if (event != null &&
+                    _streamController != null &&
                     !_streamController!.isClosed) {
-                  _streamController!.add(currentEventFluxData);
+                  _streamController!.add(event);
                 }
-                if (logReceivedData) {
-                  eventFluxLog(
-                    currentEventFluxData.data.toString(),
-                    LogEvent.info,
-                    _tag,
-                  );
-                }
-                currentEventFluxData =
-                    EventFluxData(data: '', id: '', event: '');
-                return;
-              }
-              try {
-                // Removing the line separator from the data line. It breaks the parse.
-                final sanitizedDataLine = dataLine.replaceAll('\u2028', '');
+              },
+              cancelOnError: true,
+              onDone: () async {
+                eventFluxLog('Stream Closed', LogEvent.info, _tag);
+                await _stop();
 
-                // Parsing each line through the regex.
-                final match = _lineRegex.firstMatch(sanitizedDataLine);
-                if (match == null) return;
-                var field = match.group(1);
-                if (field!.isEmpty) {
-                  return;
+                // When the stream is closed, onClose can be called to execute a function.
+                if (_onConnectionClose != null) {
+                  _onConnectionClose!();
+                  _onConnectionClose = null;
                 }
-                var value = '';
-                if (field == 'data') {
-                  // If the field is data, we get the data through the substring
-                  value = dataLine.substring(5);
-                } else {
-                  value = match.group(2) ?? '';
-                }
-                switch (field) {
-                  case 'event':
-                    currentEventFluxData.event = value;
-                    break;
-                  case 'data':
-                    currentEventFluxData.data =
-                        '${currentEventFluxData.data}$value\n';
-                    break;
-                  case 'id':
-                    currentEventFluxData.id = value;
-                    break;
-                  case 'retry':
-                    break;
-                }
-              } catch (e) {
+
+                _scheduleReconnect(config);
+              },
+              onError: (error, s) async {
+                // Suppress errors caused by explicit disconnect (e.g., FetchClient
+                // abort on web emits a ClientException when the client is closed).
+                if (_isExplicitDisconnect) return;
+
                 eventFluxLog(
-                  'Error parsing data line: $e',
+                  'Data Stream Listen Error: ${data.statusCode}: $error ',
                   LogEvent.error,
                   _tag,
                 );
-                if (onError != null) {
-                  onError(
-                    EventFluxException(
-                      message: 'Error parsing data line: $e',
-                      originalError: e,
-                      stackTrace: e is Error ? e.stackTrace : null,
-                    ),
-                  );
-                }
-              }
-            },
-            cancelOnError: true,
-            onDone: () async {
-              eventFluxLog('Stream Closed', LogEvent.info, _tag);
-              await _stop();
 
-              // When the stream is closed, onClose can be called to execute a function.
-              if (_onConnectionClose != null) {
-                _onConnectionClose!();
-                _onConnectionClose = null;
-              }
+                await InterceptorRunner.runOnError(
+                  EventFluxException(
+                    message: error.toString(),
+                    statusCode: data.statusCode,
+                    reasonPhrase: data.reasonPhrase,
+                    originalError: error,
+                    stackTrace: s,
+                  ),
+                  config.interceptors,
+                  config.onError,
+                );
 
-              _attemptReconnectIfNeeded(
-                autoReconnect,
-                type,
-                url,
-                header,
-                onSuccessCallback,
-                onError: onError,
-                onConnectionClose: onConnectionClose,
-                httpClient: httpClient,
-                body: body,
-                files: files,
-                multipartRequest: multipartRequest,
-                webConfig: webConfig,
-              );
-            },
-            onError: (error, s) async {
-              eventFluxLog(
-                'Data Stream Listen Error: ${data.statusCode}: $error ',
-                LogEvent.error,
-                _tag,
-              );
+                _scheduleReconnect(config);
+              },
+            ));
 
-              // Executes the onError function if it is not null
-              if (onError != null) {
-                onError(EventFluxException(
-                  message: error.toString(),
-                  statusCode: data.statusCode,
-                  reasonPhrase: data.reasonPhrase,
-                  originalError: error,
-                  stackTrace: s,
-                ));
-              }
-
-              _attemptReconnectIfNeeded(
-                autoReconnect,
-                type,
-                url,
-                header,
-                onSuccessCallback,
-                onError: onError,
-                onConnectionClose: onConnectionClose,
-                httpClient: httpClient,
-                body: body,
-                files: files,
-                multipartRequest: multipartRequest,
-                webConfig: webConfig,
-              );
-            },
+        if (data.statusCode == 200) {
+          _status = EventFluxStatus.connected;
+          _reconnectStrategy.resetOnSuccess();
+          _resetIdleTimer(config);
+          config.onSuccessCallback(
+            EventFluxResponse(
+              status: EventFluxStatus.connected,
+              stream: _streamController!.stream,
+            ),
           );
-
-      if (data.statusCode == 200) {
-        _status = EventFluxStatus.connected;
-        if (_reconnectConfig != null) {
-          _interval = _reconnectConfig!.interval.inSeconds;
-          _maxAttempts = _reconnectConfig!.maxAttempts;
         }
-        onSuccessCallback(
-          EventFluxResponse(
-            status: EventFluxStatus.connected,
-            stream: _streamController!.stream,
+      }).catchError((e) async {
+        eventFluxLog('Connection error: $e', LogEvent.error, _tag);
+        await InterceptorRunner.runOnError(
+          EventFluxException(
+            message: e.toString(),
+            originalError: e,
+            stackTrace: e is Error ? e.stackTrace : null,
           ),
+          config.interceptors,
+          config.onError,
         );
-      }
-    }).catchError((e) async {
-      if (onError != null) {
-        onError(EventFluxException(
-          message: e.toString(),
-          originalError: e,
-          stackTrace: e is Error ? e.stackTrace : null,
-        ));
-      }
-      await _stop();
-      _attemptReconnectIfNeeded(
-        autoReconnect,
-        type,
-        url,
-        header,
-        onSuccessCallback,
-        onError: onError,
-        onConnectionClose: onConnectionClose,
-        httpClient: httpClient,
-        body: body,
-        files: files,
-        multipartRequest: multipartRequest,
-        webConfig: webConfig,
-      );
-    });
+        _streamController?.close();
+        await _stop();
+        _scheduleReconnect(config);
+      });
   }
 
-  /// Disconnects from the event stream.
-  ///
-  /// Closes the HTTP client and the stream controller.
-  /// Returns the disconnection status enum.
-  ///
-  /// Usage Example:
-  /// ```dart
-  /// EventFluxStatus disconnectStatus = await EventFlux.instance.disconnect();
-  /// print(disconnectStatus.name);
-  /// ```
   @override
   Future<EventFluxStatus> disconnect() async {
     _isExplicitDisconnect = true;
-    _reconnectConfig = null;
+    _reconnectStrategy.clear();
     final status = await _stop();
     if (_onConnectionClose != null) {
       _onConnectionClose!();
@@ -540,20 +367,21 @@ class EventFlux extends EventFluxBase {
   }
 
   /// Internal method to handle disconnection.
-  /// this is abstracted out to set the `_isExplicitDisconnect` variable to `true` while disconnecting.
-  /// This is to prevent reconnection if the user has explicitly disconnected.
-  /// This returns the disconnection status enum.
   Future<EventFluxStatus> _stop() async {
     eventFluxLog('Disconnecting', LogEvent.info, _tag);
     try {
-      // Null out references first to prevent callbacks from using stale state.
+      _idleTimer?.cancel();
+      _idleTimer = null;
       final sub = _streamSubscription;
       final ctrl = _streamController;
       _streamSubscription = null;
       _streamController = null;
       sub?.cancel();
       ctrl?.close();
-      client?.close();
+      if (!kIsWeb) {
+        client?.close();
+      }
+      client = null;
       eventFluxLog('Disconnected', LogEvent.info, _tag);
       _status = EventFluxStatus.disconnected;
       return _status;
@@ -563,111 +391,50 @@ class EventFlux extends EventFluxBase {
     }
   }
 
-  /// Internal method to handle reconnection with a delay.
-  ///
-  /// This method is triggered in case of disconnection, especially
-  /// when `autoReconnect` is enabled. It waits for a specified duration (2 seconds),
-  /// before attempting to reconnect.
-  void _attemptReconnectIfNeeded(
-    bool autoReconnect,
-    EventFluxConnectionType type,
-    String url,
-    Map<String, String> header,
-    Function(EventFluxResponse?) onSuccessCallback, {
-    Function(EventFluxException)? onError,
-    Function()? onConnectionClose,
-    HttpClientAdapter? httpClient,
-    Map<String, dynamic>? body,
-    List<MultipartFile>? files,
-    bool multipartRequest = false,
-    WebConfig? webConfig,
-  }) async {
-    /// If autoReconnect is enabled and the user has not explicitly disconnected, it attempts to reconnect.
-    if (autoReconnect && !_isExplicitDisconnect && _reconnectConfig != null) {
-      /// If the reconnection mode is linear, the interval remains constant.
+  /// Resets the idle timer. If no data arrives within the configured
+  /// [connectionTimeout], the connection is stopped and a reconnect
+  /// is scheduled.
+  void _resetIdleTimer(ConnectionConfig config) {
+    _idleTimer?.cancel();
+    _idleTimer = null;
+    final timeout = config.reconnectConfig?.connectionTimeout;
+    if (timeout == null) return;
+    _idleTimer = Timer(timeout, () async {
+      eventFluxLog('Idle timeout fired', LogEvent.info, _tag);
+      await _stop();
+      if (_onConnectionClose != null) {
+        _onConnectionClose!();
+        _onConnectionClose = null;
+      }
+      _scheduleReconnect(config);
+    });
+  }
 
-      /// If the maximum attempts is -1, it means there is no limit to the number of attempts.
-      if (_maxAttempts != -1) {
-        /// If the maximum attempts are exhausted, it stops the connection.
-        if (_maxAttempts == 0) {
-          await _stop();
-          return;
+  /// Schedules a reconnect attempt via [ReconnectStrategy] if conditions are met.
+  void _scheduleReconnect(ConnectionConfig config) async {
+    ConnectionConfig effectiveConfig = config;
+    await _reconnectStrategy.attemptIfNeeded(
+      autoReconnect: config.autoReconnect,
+      isExplicitDisconnect: () => _isExplicitDisconnect,
+      tag: _tag,
+      refreshHeaders: () async {
+        if (_reconnectStrategy.config?.reconnectHeader != null) {
+          final h = await _reconnectStrategy.config!.reconnectHeader!();
+          effectiveConfig = config.copyWithHeader(h);
         }
-
-        /// _maxAttempts is decremented after each attempt.
-        _maxAttempts--;
-      }
-
-      // If a reconnectHeader is provided, it is executed to get the header.
-      if (_reconnectConfig!.reconnectHeader != null) {
-        header = await _reconnectConfig!.reconnectHeader!();
-      }
-
-      if (_isExplicitDisconnect) {
-        eventFluxLog("Explicit disconnection. Aborting retry attempts",
-            LogEvent.info, _tag);
-        return; // Exit early if an explicit disconnect occurred.
-      }
-
-      switch (_reconnectConfig!.mode) {
-        case ReconnectMode.linear:
-
-          /// It waits for the specified constant interval before attempting to reconnect.
-          await Future.delayed(_reconnectConfig!.interval, () {
-            if (!_isExplicitDisconnect) {
-              eventFluxLog("Trying again in ${_interval.toString()} seconds",
-                  LogEvent.reconnect, _tag);
-              _status = EventFluxStatus.connectionInitiated;
-              _start(
-                type,
-                url,
-                onSuccessCallback: onSuccessCallback,
-                autoReconnect: autoReconnect,
-                onError: onError,
-                header: header,
-                onConnectionClose: onConnectionClose,
-                httpClient: httpClient,
-                body: body,
-                files: files,
-                multipartRequest: multipartRequest,
-                webConfig: webConfig,
-              );
-            }
-          });
-          break;
-
-        case ReconnectMode.exponential:
-
-          /// It waits for the specified interval before attempting to reconnect.
-          await Future.delayed(Duration(seconds: _interval), () {
-            if (!_isExplicitDisconnect) {
-              eventFluxLog("Trying again in ${_interval.toString()} seconds",
-                  LogEvent.reconnect, _tag);
-              _interval = _interval * 2;
-
-              _status = EventFluxStatus.connectionInitiated;
-              _start(
-                type,
-                url,
-                onSuccessCallback: onSuccessCallback,
-                autoReconnect: autoReconnect,
-                onError: onError,
-                header: header,
-                onConnectionClose: onConnectionClose,
-                httpClient: httpClient,
-                body: body,
-                files: files,
-                multipartRequest: multipartRequest,
-                webConfig: webConfig,
-              );
-            }
-
-          });
-          break;
-      }
-      if (_reconnectConfig != null && _reconnectConfig?.onReconnect != null) {
-        _reconnectConfig!.onReconnect!();
-      }
-    }
+      },
+      startConnection: () {
+        _status = EventFluxStatus.reconnecting;
+        // Inject Last-Event-ID header on reconnect
+        final lastId = _sseParser.lastEventId;
+        if (lastId.isNotEmpty) {
+          final merged = Map<String, String>.from(effectiveConfig.header);
+          merged['Last-Event-ID'] = lastId;
+          effectiveConfig = effectiveConfig.copyWithHeader(merged);
+        }
+        _start(effectiveConfig);
+      },
+      stopConnection: () => _stop(),
+    );
   }
 }

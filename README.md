@@ -1,250 +1,389 @@
 <div align="center"><img src="https://i.ibb.co/tHK94xW/Untitled-2024-01-10-1728.png" width="200"/></div>
 
-EventFlux is a Dart package designed for efficient handling of server-sent event streams. It provides easy-to-use connectivity, data management, and robust error handling for real-time data applications. 🚀
+# EventFlux
 
+A Dart package for Server-Sent Events done right — WHATWG spec-compliant parsing, auto-reconnect with exponential backoff, request/response interceptors, mid-flight abort, idle timeout detection, and web platform support out of the box.
 
-## Supported Platforms
-| Android | iOS  |  Web | MacOS | Windows | Linux |
-| ------ | ---- | ---- | ----- | ------- | ----- |
-| ✅|✅|✅|✅|❓|❓| 
+## Platform Support
 
-*Pssst... see those question marks? That's your cue, tech adventurers! Dive in, test, and tell me all about it.* 🚀🛠️
+| Android | iOS | Web | MacOS | Windows | Linux |
+|---------|-----|-----|-------|---------|-------|
+| ✅ | ✅ | ✅ | ✅ | ❓ | ❓ |
 
+Windows and Linux should work but haven't been battle-tested yet — PRs welcome if you get there first.
 
+## Features 🌟
 
-## Inspiration 💡
+- 📜 **WHATWG SSE spec-compliant** event stream parsing with persistent `lastEventId` and `retry:` field support
+- 🔄 **Auto-reconnect** with linear or exponential backoff, random jitter, and configurable `maxBackoff` cap
+- 🔗 **Interceptor chain** — hook into request, response, and error lifecycle stages
+- 🛑 **Mid-flight abort** via a `Future<void>` trigger
+- ⏱️ **Idle timeout detection** — drops the connection if no data arrives within a configured duration
+- 🌐 **Web platform support** with CORS, credentials, and caching configuration via `WebConfig`
+- 🔍 **Event filtering** by type using `response.where()`
+- 📎 **Multipart request** support
+- 🏗️ **Singleton** (`EventFlux.instance`) and **multiple independent connections** (`EventFlux.spawn()`)
+- 🔌 **Pluggable HTTP clients** via `HttpClientAdapter`
+- 🧠 **Smart error classification** — only 5xx, 408, and 429 trigger auto-reconnect
 
-EventFlux was born from the inspiration I found in the [`flutter_client_sse` package](https://pub.dev/packages/flutter_client_sse) by [Pratik Baid](https://github.com/pratikbaid3). His work laid a great foundation, and I aimed to build upon it, adding my own twist to enhance SSE stream management with better features. 🛠️
+## Migrating from v2 🔄
 
-## Why EventFlux? 🌟
+If you're upgrading from v2, here's what changed:
 
-- **Streamlined Connection Handling**: Easy setup for connecting to event streams with support for both GET and POST requests. 🔌
-- **Auto-Reconnect Capability**: Seamlessly maintains your connection, automatically reconnecting in case of any server interruptions or network changes. Devs can choose to do linear or exponential backoff  🔄
-- **Real-Time Data Management**: Efficient processing and handling of real-time data streams. 📈
-- **Error Handling**: Robust mechanisms to manage connection interruptions and stream errors. 🛡️
-- **Versatile Instance Creation**: Offers both singleton and factory patterns for tailored SSE connections. 🌍
-- **Customizable**: Extendable to fit various use cases and custom implementations. ✨
+#### Breaking
+- `onReconnect` callback signature changed from `()` to `(int attempt, Duration delay)`
+- Default request headers now include `Cache-Control: no-store`
+- Minimum Dart SDK raised to `>=3.4.0`, Flutter `>=3.0.0`
+- `webConfig` is now required when running on web
 
+#### New in v3
+- `EventFluxStatus.reconnecting` status value
+- `originalError` and `stackTrace` fields on `EventFluxException`
+- Request/response/error interceptor chain via `interceptors` parameter
+- Mid-flight abort support via `abortTrigger` parameter
+- Idle timeout detection via `connectionTimeout` on `ReconnectConfig`
+- `maxBackoff` on `ReconnectConfig` to cap exponential backoff
+- WHATWG-compliant SSE parser with persistent `lastEventId`, `retry:` field support, and U+2028 sanitization
 
-## EventFlux for Every Scenario 🌟
-
-<img src="https://i.ibb.co/gDWrnb0/flow.png" width="600"/>
-
-## Get Started in a Snap 📦
-
-Add EventFlux to your Dart project's dependencies, and you're golden:
+## Installation 📦
 
 ```yaml
 dependencies:
-  eventflux: ^2.2.2-dev.2
+  eventflux: ^3.0.0-dev
 ```
 
+Requires Dart SDK `>=3.4.0` and Flutter `>=3.0.0`.
 
-## How to Use (Spoiler: It's Super Easy) 🔧
-
-Here's a quick example to get you started:
+## Usage 🔧
 
 <details>
-<summary>The Simple Streamer ✨</summary>
-&nbsp;<br>
-Need just one SSE connection? It's a breeze with EventFlux! Perfect for when your app is dancing solo with a single SSE.
-
+<summary><b>Basic Connection</b> — Connect to an SSE endpoint in a few lines</summary>
 
 ```dart
 import 'package:eventflux/eventflux.dart';
 
 void main() {
-  // Connect and start the magic!
-   EventFlux.instance.connect(
-     EventFluxConnectionType.get,
-     'https://example.com/events',
-     files: [
-      /// Optional, If you want to send multipart files with the request
-     ],
-     multipartRequest: true, // Optional, By default, it will be considered as normal request, but if the files are provided or this flag is true, it will be considered as multipart request
-     onSuccessCallback: (EventFluxResponse? response) {
-      response.stream?.listen((data) {
-        // Your data is now in the spotlight!
+  EventFlux.instance.connect(
+    EventFluxConnectionType.get,
+    'https://example.com/events',
+    onSuccessCallback: (EventFluxResponse? response) {
+      response?.stream?.listen((EventFluxData data) {
+        print('Event: ${data.event}');
+        print('Data: ${data.data}');
       });
-     },
-     onError: (oops) {
-      // Oops! Time to handle those little hiccups.
-      // You can also choose to disconnect here
     },
-    autoReconnect: true // Keep the party going, automatically!
-    reconnectConfig: ReconnectConfig(
-        mode: ReconnectMode.linear, // or exponential,
-        interval: Duration(seconds: 5),
-        reconnectHeader: () async {
-          /// If you want to send custom headers during reconnect which are different from the initial connection
-          /// If you don't want to send any headers, you can skip this, initial headers will be used 
-
-          // Your async code to refresh or fetch headers
-          // For example, fetching a new access token:
-          String newAccessToken = await fetchNewAccessToken();
-          return {
-            'Authorization': 'Bearer $newAccessToken',
-            'Accept': 'text/event-stream',
-          };
-        },
-        maxAttempts: 5, // or -1 for infinite,
-        onReconnect: () {
-          // Things to execute when reconnect happens
-          // FYI: for network changes, the `onReconnect` will not be called. 
-          // It will only be called when the connection is interupted by the server and eventflux is trying to reconnect.
-        }
-    ),
-   );
+    onError: (EventFluxException error) {
+      print('Error: $error');
+    },
+    onConnectionClose: () {
+      print('Connection closed');
+    },
+  );
 }
-
 ```
-&nbsp;<br>
+
 </details>
 
 <details>
-<summary>Supercharged 🚀</summary>
-&nbsp;<br>
-When your app just need a multiple parallel SSE connections, use this.
+<summary><b>Auto-Reconnect</b> — Exponential backoff with jitter and token refresh</summary>
 
 ```dart
 import 'package:eventflux/eventflux.dart';
 
 void main() {
+  EventFlux.instance.connect(
+    EventFluxConnectionType.get,
+    'https://example.com/events',
+    onSuccessCallback: (EventFluxResponse? response) {
+      response?.stream?.listen((data) {
+        print('Data: ${data.data}');
+      });
+    },
+    onError: (error) {
+      print('Error: $error');
+    },
+    autoReconnect: true,
+    reconnectConfig: ReconnectConfig(
+      mode: ReconnectMode.exponential,
+      interval: Duration(seconds: 2),
+      maxAttempts: 10,
+      maxBackoff: Duration(seconds: 30),
+      connectionTimeout: Duration(seconds: 60),
+      onReconnect: (int attempt, Duration delay) {
+        print('Reconnect attempt $attempt after $delay');
+      },
+      reconnectHeader: () async {
+        String newToken = await refreshAccessToken();
+        return {
+          'Authorization': 'Bearer $newToken',
+          'Accept': 'text/event-stream',
+        };
+      },
+    ),
+  );
+}
+```
 
-  // Create separate EventFlux instances for each SSE connection
+</details>
+
+<details>
+<summary><b>Interceptors</b> — Inject auth headers, log responses, suppress errors</summary>
+
+```dart
+import 'package:eventflux/eventflux.dart';
+import 'package:http/http.dart';
+
+class AuthInterceptor extends EventFluxInterceptor {
+  @override
+  Future<BaseRequest> onRequest(BaseRequest request) async {
+    request.headers['Authorization'] = 'Bearer my-token';
+    return request;
+  }
+
+  @override
+  Future<StreamedResponse> onResponse(StreamedResponse response) async {
+    print('Response status: ${response.statusCode}');
+    return response;
+  }
+
+  @override
+  Future<EventFluxException?> onError(EventFluxException exception) async {
+    print('Intercepted error: $exception');
+    // Return null to suppress the error, or return exception to propagate it
+    return exception;
+  }
+}
+
+void main() {
+  EventFlux.instance.connect(
+    EventFluxConnectionType.get,
+    'https://example.com/events',
+    interceptors: [AuthInterceptor()],
+    onSuccessCallback: (EventFluxResponse? response) {
+      response?.stream?.listen((data) {
+        print('Data: ${data.data}');
+      });
+    },
+    onError: (error) {
+      print('Error: $error');
+    },
+  );
+}
+```
+
+</details>
+
+<details>
+<summary><b>Abort a Connection</b> — Cancel an in-flight request at any time</summary>
+
+```dart
+import 'dart:async';
+import 'package:eventflux/eventflux.dart';
+
+void main() {
+  final completer = Completer<void>();
+
+  EventFlux.instance.connect(
+    EventFluxConnectionType.get,
+    'https://example.com/events',
+    abortTrigger: completer.future,
+    onSuccessCallback: (EventFluxResponse? response) {
+      response?.stream?.listen((data) {
+        print('Data: ${data.data}');
+      });
+    },
+    onError: (error) {
+      print('Error: $error');
+    },
+  );
+
+  // Cancel the connection at any time
+  Future.delayed(Duration(seconds: 10), () {
+    completer.complete();
+  });
+}
+```
+
+</details>
+
+<details>
+<summary><b>Web Platform</b> — Configure CORS and credentials for browser SSE</summary>
+
+```dart
+import 'package:eventflux/eventflux.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+void main() {
+  EventFlux.instance.connect(
+    EventFluxConnectionType.get,
+    'https://example.com/events',
+    webConfig: kIsWeb
+        ? WebConfig(
+            mode: WebConfigRequestMode.cors,
+            credentials: WebConfigRequestCredentials.omit,
+          )
+        : null,
+    onSuccessCallback: (EventFluxResponse? response) {
+      response?.stream?.listen((data) {
+        print('Data: ${data.data}');
+      });
+    },
+    onError: (error) {
+      print('Error: $error');
+    },
+  );
+}
+```
+
+</details>
+
+<details>
+<summary><b>Multiple Connections</b> — Run independent SSE streams in parallel</summary>
+
+```dart
+import 'package:eventflux/eventflux.dart';
+
+void main() {
   EventFlux e1 = EventFlux.spawn();
   EventFlux e2 = EventFlux.spawn();
 
-   // First connection - firing up!
-  e1.connect(EventFluxConnectionType.get, 
-     'https://example1.com/events',
-     tag: "SSE Connection 1", // Optional tag for debugging, you'll see this in logs
-     onSuccessCallback: (EventFluxResponse? data) {
-       data.stream?.listen((data) {
-        // Your 1st Stream's data is being fetched!
+  e1.connect(
+    EventFluxConnectionType.get,
+    'https://example.com/stream-1',
+    tag: 'Stream 1',
+    onSuccessCallback: (EventFluxResponse? response) {
+      response?.stream?.listen((data) {
+        print('Stream 1: ${data.data}');
       });
-     },
-     onError: (oops) {
-        // Oops! Time to handle those little hiccups.
-        // You can also choose to disconnect here
-      },
+    },
+    onError: (error) {
+      print('Stream 1 error: $error');
+    },
   );
 
-   // Second connection - firing up!
-   e2.connect(EventFluxConnectionType.get,
-     'https://example2.com/events',
-     tag: "SSE Connection 2", // Optional tag for debugging, you'll see this in logs
-     onSuccessCallback: (EventFluxResponse? data) {
-       data.stream?.listen((data) {
-        // Your 2nd Stream's data is also being fetched!
+  e2.connect(
+    EventFluxConnectionType.get,
+    'https://example.com/stream-2',
+    tag: 'Stream 2',
+    onSuccessCallback: (EventFluxResponse? response) {
+      response?.stream?.listen((data) {
+        print('Stream 2: ${data.data}');
       });
-     },
-     onError: (oops) {
-        // Oops! Time to handle those little hiccups.
-        // You can also choose to disconnect here
-      },
-    autoReconnect: true // Keep the party going, automatically!
-    reconnectConfig: ReconnectConfig(
-        mode: ReconnectMode.exponential, // or linear,
-        interval: Duration(seconds: 5),
-        maxAttempts: 5, // or -1 for infinite,
-        reconnectHeader: () async {
-          /// If you want to send custom headers during reconnect which are different from the initial connection
-          /// If you don't want to send any headers, you can skip this, initial headers will be used 
-
-          // Your async code to refresh or fetch headers
-          // For example, fetching a new access token:
-          String newAccessToken = await fetchNewAccessToken();
-          return {
-            'Authorization': 'Bearer $newAccessToken',
-            'Accept': 'text/event-stream',
-          };
-        },
-        onReconnect: () {
-          // Things to execute when reconnect happens
-          // FYI: for network changes, the `onReconnect` will not be called. 
-          // It will only be called when the connection is interupted by the server and eventflux is trying to re-establish the connection.
-        }
-    ),
+    },
+    onError: (error) {
+      print('Stream 2 error: $error');
+    },
   );
+
+  // Disconnect both when done
+  // await e1.disconnect();
+  // await e2.disconnect();
 }
-
 ```
 
-ℹ️ Remember to disconnect all instances when you are done with it to avoid memory leaks.
-&nbsp;<br>
-
 </details>
 
-## Need More Info? 📚
+**Event Filtering** — filter events by type using `where()`:
 
-- **EventFlux**: Main class for managing event streams.
-- **ReconnectConfig**: Configuration for auto-reconnect.
-- **EventFluxData**: Data model for events received from the stream.
-- **EventFluxException**: Custom exception handling for EventFlux operations.
-- **EventFluxResponse**: Encapsulates the response from EventFlux operations.
-- **Enums**: `EventFluxConnectionType` for specifying connection types and `EventFluxStatus` for connection status.
+```dart
+response?.where('message').listen((data) {
+  print('Message event: ${data.data}');
+});
+```
 
-For detailed documentation, please see the respective Dart files in the `lib` folder.
-
-### EventFlux Class Documentation 📖
-
-`EventFlux` is a Dart class for managing server-sent event streams. It provides methods for connecting to, disconnecting from, and managing SSE streams.
 <details>
-<summary><b>Connect</b></summary>
-&nbsp;<br>
+<summary><b>API Reference 📚</b></summary>
+
+### Connect
+
 Connects to a server-sent event stream.
 
-| Parameter           | Type                            | Description                                                | Default                           |
-| ------------------- | ------------------------------- | ---------------------------------------------------------- | --------------------------------- |
-| `type`              | `EventFluxConnectionType`       | The type of HTTP request (GET or POST).                    | -                                 |
-| `url`               | `String`                        | The URL of the SSE stream to connect to.                   | -                                 |
-| `header`            | `Map<String, String>`           | HTTP headers for the request.                              | `{'Accept': 'text/event-stream'}` |
-| `onConnectionClose` | `Function()?`                   | Callback function triggered when the connection is closed. | -                                 |
-| `autoReconnect`     | `bool`                          | Whether to automatically reconnect on disconnection.       | `false`                           |
-| `reconnectConfig`   | `ReconnectConfig?`              | Configuration for auto-reconnect. If `auto-reconnect` is true, this is required| -                                 |
-| `onSuccessCallback` | `Function(EventFluxResponse?)`  | Callback invoked upon successful connection.               | -                                 |
-| `onError`           | `Function(EventFluxException)?` | Callback for handling errors.                              | -                                 |
-| `body`              | `Map<String, dynamic>?`         | Optional body for POST request types.                      | -                                 |
-| `files`             | `List<File>?`                   | Optional list of files to send with the request.           | -                                 |
-| `multipartRequest`  | `bool`                          | Whether the request is a multipart request.                | `false`                           |
-| `tag`               | `String`                        | Optional tag for debugging.                                | -                                 |
-| `logReceivedData`  | `bool`                          | Whether to log received data.                              | `false`                           |
-| `httpClient`        | `HttpClientAdapter?`            | Optional Http Client Adapter to allow usage of different http clients. | -                                 |
-| `webConfig`         | `WebConfig?`                    | Allows configuring the web client. Ignored for non-web platforms. | -                                 |
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `type` | `EventFluxConnectionType` | HTTP method (`get` or `post`) | — |
+| `url` | `String` | SSE stream URL | — |
+| `onSuccessCallback` | `Function(EventFluxResponse?)` | Callback on successful connection (required) | — |
+| `header` | `Map<String, String>` | HTTP headers | `{'Accept': 'text/event-stream', 'Cache-Control': 'no-store'}` |
+| `onConnectionClose` | `Function()?` | Called when the connection closes | — |
+| `autoReconnect` | `bool` | Auto-reconnect on disconnection | `false` |
+| `reconnectConfig` | `ReconnectConfig?` | Reconnection settings (required if `autoReconnect` is true) | — |
+| `onError` | `Function(EventFluxException)?` | Error callback | — |
+| `body` | `Map<String, dynamic>?` | Request body for POST | — |
+| `files` | `List<MultipartFile>?` | Files for multipart requests | — |
+| `multipartRequest` | `bool` | Send as multipart | `false` |
+| `tag` | `String?` | Debug tag (appears in logs) | — |
+| `logReceivedData` | `bool` | Log received SSE data | `false` |
+| `httpClient` | `HttpClientAdapter?` | Custom HTTP client | — |
+| `webConfig` | `WebConfig?` | Web platform configuration (required on web) | — |
+| `interceptors` | `List<EventFluxInterceptor>?` | Request/response/error interceptors | — |
+| `abortTrigger` | `Future<void>?` | Future that aborts the connection when completed | — |
 
-&nbsp;<br>
-</details>
+### ReconnectConfig
 
-<details>
-<summary><b>Disconnect</b></summary>
-&nbsp;<br>
-Disconnects from the SSE stream.
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `mode` | `ReconnectMode` | `linear` or `exponential` (required) | — |
+| `interval` | `Duration` | Base retry interval | `Duration(seconds: 2)` |
+| `maxAttempts` | `int` | Max reconnect attempts (-1 for unlimited) | `5` |
+| `maxBackoff` | `Duration` | Cap for exponential backoff | `Duration(seconds: 30)` |
+| `connectionTimeout` | `Duration?` | Idle timeout — drops connection if no data received | — |
+| `onReconnect` | `void Function(int attempt, Duration delay)?` | Called on each reconnect attempt | — |
+| `reconnectHeader` | `Future<Map<String, String>> Function()?` | Async header refresh for reconnect | — |
 
-| Parameter | Type | Description                    |
-| --------- | ---- | ------------------------------ |
-| -         | -    | This method has no parameters. |
+### EventFluxInterceptor
+
+Subclass `EventFluxInterceptor` and override any of the following methods:
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `onRequest` | `Future<BaseRequest> onRequest(BaseRequest request)` | Modify the request before sending (e.g., inject auth headers). Throw `EventFluxException` to abort. |
+| `onResponse` | `Future<StreamedResponse> onResponse(StreamedResponse response)` | Inspect the response after receiving. Must not consume the stream body. |
+| `onError` | `Future<EventFluxException?> onError(EventFluxException exception)` | Handle or suppress errors. Return `null` to suppress the exception. |
+
+### EventFluxStatus
+
+| Value | Description |
+|-------|-------------|
+| `connectionInitiated` | Connection process has started |
+| `connected` | Successfully connected to the event stream |
+| `reconnecting` | Auto-reconnect is in progress |
+| `disconnected` | Connection has been closed |
+| `error` | An error occurred during connection or disconnection |
+
+### Disconnect
+
+```dart
+EventFluxStatus status = await EventFlux.instance.disconnect();
+```
 
 Returns a `Future<EventFluxStatus>` indicating the disconnection status.
-&nbsp;<br>
+
+### Spawn
+
+```dart
+EventFlux instance = EventFlux.spawn();
+```
+
+Returns a new independent `EventFlux` instance for managing parallel SSE connections.
+
 </details>
 
-<details>
-<summary><b>Spawn</b></summary>
-&nbsp;<br>
+## Contributors 💜
 
-| Parameter | Type | Description                    |
-| --------- | ---- | ------------------------------ |
-| -         | -    | This method has no parameters. |
+<a href="https://github.com/Imgkl"><img src="https://github.com/Imgkl.png" width="60" style="border-radius:50%" alt="Imgkl"/></a>
+<a href="https://github.com/Peetee06"><img src="https://github.com/Peetee06.png" width="60" style="border-radius:50%" alt="Peetee06"/></a>
+<a href="https://github.com/pedrohsampaioo"><img src="https://github.com/pedrohsampaioo.png" width="60" style="border-radius:50%" alt="pedrohsampaioo"/></a>
+<a href="https://github.com/krolmic"><img src="https://github.com/krolmic.png" width="60" style="border-radius:50%" alt="krolmic"/></a>
+<a href="https://github.com/FelippeNO"><img src="https://github.com/FelippeNO.png" width="60" style="border-radius:50%" alt="FelippeNO"/></a>
+<a href="https://github.com/jcarvalho-ptech"><img src="https://github.com/jcarvalho-ptech.png" width="60" style="border-radius:50%" alt="jcarvalho-ptech"/></a>
+<a href="https://github.com/aabegg"><img src="https://github.com/aabegg.png" width="60" style="border-radius:50%" alt="aabegg"/></a>
+<a href="https://github.com/jangruenwaldt"><img src="https://github.com/jangruenwaldt.png" width="60" style="border-radius:50%" alt="jangruenwaldt"/></a>
+<a href="https://github.com/glukose"><img src="https://github.com/glukose.png" width="60" style="border-radius:50%" alt="glukose"/></a>
 
-Returns a new instance of `EventFlux`, this is used for having multiple SSE connections.
-&nbsp;<br>
-</details>
+## Contributing 🤝
 
-## Be a Part of the Adventure 🤝
+Contributions are welcome — open an issue or submit a pull request. Every bit helps.
 
-Got ideas? Want to contribute? Jump aboard! Open an issue or send a pull request. Let's make EventFlux even more awesome together!
+## License
 
-## The Boring (but Important) Stuff 📝
-
-Licensed under MIT - use it freely, but let's play nice and give credit where it's due!
+Licensed under [MIT](LICENSE).
