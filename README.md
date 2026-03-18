@@ -53,7 +53,7 @@ If you're upgrading from v2, here's what changed:
 
 ```yaml
 dependencies:
-  eventflux: ^3.0.1-dev
+  eventflux: ^3.0.0-dev
 ```
 
 Requires Dart SDK `>=3.4.0` and Flutter `>=3.0.0`.

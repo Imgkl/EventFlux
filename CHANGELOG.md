@@ -1,7 +1,7 @@
 
 # Changelog 📝
 
-### v3.0.1-dev 🚀
+### v3.0.0-dev 🚀
 #### Breaking
 - `onReconnect` callback signature changed from `()` to `(int attempt, Duration delay)`
 - Default request headers now include `Cache-Control: no-store`
