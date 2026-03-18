@@ -51,18 +51,18 @@ class EventFluxData {
         data,
       );
     }
-    final idParts = lines[0].split('id:');
-    final eventParts = lines[1].split('event:');
-    final dataParts = lines[2].split('data:');
-    if (idParts.length < 2 || eventParts.length < 2 || dataParts.length < 2) {
+    final idIdx = lines[0].indexOf('id:');
+    final eventIdx = lines[1].indexOf('event:');
+    final dataIdx = lines[2].indexOf('data:');
+    if (idIdx == -1 || eventIdx == -1 || dataIdx == -1) {
       throw FormatException(
         'EventFluxData.fromData expects lines prefixed with "id:", "event:", "data:"',
         data,
       );
     }
-    id = idParts[1];
-    event = eventParts[1];
-    this.data = dataParts[1];
+    id = lines[0].substring(idIdx + 3);
+    event = lines[1].substring(eventIdx + 6);
+    this.data = lines[2].substring(dataIdx + 5);
   }
 
   /// Parses the [data] field as JSON and returns the decoded result.

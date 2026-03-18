@@ -9,8 +9,11 @@ import 'package:eventflux/utils.dart';
 /// (per the SSE spec). Returns `null` for non-terminal lines.
 class SseParser {
   static final RegExp _lineRegex = RegExp(r'^([^:]*)(?::)?(?: )?(.*)?$');
+  static final RegExp _retryRegex = RegExp(r'^\d+$');
+  static final RegExp _unicodeSeparatorRegex = RegExp('[\u2028\u2029]');
 
   EventFluxData _current = EventFluxData(data: '', id: '', event: '');
+  final StringBuffer _dataBuffer = StringBuffer();
 
   /// Last event ID — persists across reconnections per WHATWG spec.
   String _lastEventId = '';
@@ -49,7 +52,7 @@ class SseParser {
 
     try {
       // Remove the Unicode line separator that breaks the regex parse.
-      final sanitizedDataLine = dataLine.replaceAll('\u2028', '');
+      final sanitizedDataLine = dataLine.replaceAll(RegExp('[\u2028\u2029]'), '');
 
       final match = _lineRegex.firstMatch(sanitizedDataLine);
       if (match == null) return null;
@@ -57,13 +60,7 @@ class SseParser {
       var field = match.group(1);
       if (field!.isEmpty) return null;
 
-      var value = '';
-      if (field == 'data') {
-        // For data fields, grab everything after "data:"
-        value = dataLine.substring(5);
-      } else {
-        value = match.group(2) ?? '';
-      }
+      var value = match.group(2) ?? '';
 
       switch (field) {
         case 'event':
@@ -80,10 +77,9 @@ class SseParser {
           }
           break;
         case 'retry':
-          final trimmed = value.trim();
-          if (RegExp(r'^\d+$').hasMatch(trimmed)) {
+          if (_retryRegex.hasMatch(value)) {
             _serverRetryInterval =
-                Duration(milliseconds: int.parse(trimmed));
+                Duration(milliseconds: int.parse(value));
           }
           break;
       }
@@ -108,5 +104,14 @@ class SseParser {
   void reset() {
     _current = EventFluxData(data: '', id: '', event: '');
     _serverRetryInterval = null;
+  }
+
+  /// Full reset including [_lastEventId].
+  ///
+  /// Called on explicit disconnect to prevent stale IDs from leaking
+  /// into a subsequent connection.
+  void fullReset() {
+    reset();
+    _lastEventId = '';
   }
 }

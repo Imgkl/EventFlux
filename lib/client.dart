@@ -130,7 +130,7 @@ class EventFlux extends EventFluxBase {
   }
 
   /// An internal method to handle the connection process.
-  void _start(ConnectionConfig config) async {
+  Future<void> _start(ConnectionConfig config) async {
     _onConnectionClose = config.onConnectionClose;
 
     /// Create a new HTTP client based on the platform if no adapter is present.
@@ -168,6 +168,7 @@ class EventFlux extends EventFluxBase {
         await InterceptorRunner.runOnError(
             e, config.interceptors, config.onError);
         _streamController?.close();
+        await _stop();
         return;
       }
     }
@@ -243,6 +244,7 @@ class EventFlux extends EventFluxBase {
             config.interceptors,
             config.onError,
           );
+          await _stop();
           return;
         }
 
@@ -358,6 +360,7 @@ class EventFlux extends EventFluxBase {
   Future<EventFluxStatus> disconnect() async {
     _isExplicitDisconnect = true;
     _reconnectStrategy.clear();
+    _sseParser.fullReset();
     final status = await _stop();
     if (_onConnectionClose != null) {
       _onConnectionClose!();
@@ -411,7 +414,7 @@ class EventFlux extends EventFluxBase {
   }
 
   /// Schedules a reconnect attempt via [ReconnectStrategy] if conditions are met.
-  void _scheduleReconnect(ConnectionConfig config) async {
+  Future<void> _scheduleReconnect(ConnectionConfig config) async {
     ConnectionConfig effectiveConfig = config;
     await _reconnectStrategy.attemptIfNeeded(
       autoReconnect: config.autoReconnect,

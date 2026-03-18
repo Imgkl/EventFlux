@@ -196,5 +196,67 @@ void main() {
       parser.reset();
       expect(parser.serverRetryInterval, isNull);
     });
+
+    // --- Leading space stripping (WHATWG: one space after colon is stripped) ---
+
+    test('single leading space after colon is stripped for data', () {
+      parser.processLine('data: hello');
+      final result = parser.processLine('');
+      expect(result!.data, 'hello');
+    });
+
+    test('only first leading space is stripped — second space preserved', () {
+      parser.processLine('data:  hello');
+      final result = parser.processLine('');
+      expect(result!.data, ' hello');
+    });
+
+    test('single leading space after colon is stripped for event', () {
+      parser.processLine('event: message');
+      parser.processLine('data:x');
+      final result = parser.processLine('');
+      expect(result!.event, 'message');
+    });
+
+    test('single leading space after colon is stripped for id', () {
+      parser.processLine('id: 42');
+      parser.processLine('data:x');
+      final result = parser.processLine('');
+      expect(result!.id, '42');
+    });
+
+    // --- fullReset() clears lastEventId ---
+
+    test('fullReset() clears lastEventId', () {
+      parser.processLine('id:42');
+      parser.processLine('data:test');
+      parser.processLine('');
+      expect(parser.lastEventId, '42');
+
+      parser.fullReset();
+      expect(parser.lastEventId, '');
+    });
+
+    // --- U+2029 paragraph separator handling ---
+
+    test('strips Unicode paragraph separator U+2029', () {
+      parser.processLine('data:hello\u2029world');
+      final result = parser.processLine('');
+      expect(result, isNotNull);
+      expect(result!.data, 'helloworld');
+    });
+
+    // --- retry: strict spec compliance (no .trim()) ---
+
+    test('retry: with single leading space is parsed (space stripped by regex)',
+        () {
+      parser.processLine('retry: 3000');
+      expect(parser.serverRetryInterval, const Duration(milliseconds: 3000));
+    });
+
+    test('retry: with double space is ignored (value has leading space)', () {
+      parser.processLine('retry:  3000');
+      expect(parser.serverRetryInterval, isNull);
+    });
   });
 }
