@@ -26,7 +26,9 @@ Windows and Linux should work but haven't been battle-tested yet — PRs welcome
 - 🔌 **Pluggable HTTP clients** via `HttpClientAdapter`
 - 🧠 **Smart error classification** — only 5xx, 408, and 429 trigger auto-reconnect
 
-## Migrating from v2 🔄
+## Migrating from v2? FYI. 🔄
+<details>
+<summary>Here</summary>
 
 If you're upgrading from v2, here's what changed:
 
@@ -44,6 +46,8 @@ If you're upgrading from v2, here's what changed:
 - Idle timeout detection via `connectionTimeout` on `ReconnectConfig`
 - `maxBackoff` on `ReconnectConfig` to cap exponential backoff
 - WHATWG-compliant SSE parser with persistent `lastEventId`, `retry:` field support, and U+2028 sanitization
+
+</details>
 
 ## Installation 📦
 
@@ -372,18 +376,19 @@ Returns a new independent `EventFlux` instance for managing parallel SSE connect
 
 v3 SSE parsing performance compared against v2.2.1 and [flutter_client_sse](https://pub.dev/packages/flutter_client_sse) 2.0.3.
 
-| Operation | v2.2.1 (μs) | v3.0.0 (μs) | flutter_client_sse (μs) | Best |
-|---|--:|--:|--:|---|
-| SSE Parser (1000 events × 20 lines) | 5,274 | 5,375 | 5,756 | v2 |
-| SSE Parser (100 events × 200 lines) | 11,856 | **4,967** | 19,872 | **v3** |
-| fromData (10K ops) | 3,618 | **1,172** | 1,658 | **v3** |
-| Comment/Heartbeat (10K lines) | 649 | **565** | 643 | **v3** |
-| Single Large Payload (100 × 10KB) | 1,150 | 1,175 | **892** | fcs |
-| Mixed Workload (~5K lines) | 2,203 | **1,623** | 2,911 | **v3** |
+| Operation | v2.2.1 | v3.0.0 | flutter_client_sse |
+|---|--:|--:|--:|
+| SSE Parser (1000 events × 20 lines) | 5,274 μs | 5,375 μs | 5,756 μs |
+| SSE Parser (100 events × 200 lines) | 11,856 μs | **4,967 μs** | 19,872 μs |
+| fromData (10K ops) | 3,618 μs | **1,172 μs** | 1,658 μs |
+| Comment/Heartbeat (10K lines) | 649 μs | **565 μs** | 643 μs |
+| Single Large Payload (100 × 10KB) | 1,150 μs | 1,175 μs | **892 μs** |
+| Mixed Workload (~5K lines) | 2,203 μs | **1,623 μs** | 2,911 μs |
 
 ## Contributors 💜
 
-<a href="https://github.com/Imgkl"><img src="https://github.com/Imgkl.png" width="60" style="border-radius:50%" alt="Imgkl"/></a>
+EventFlux wouldn't exist without these people who believed it could be better.
+
 <a href="https://github.com/Peetee06"><img src="https://github.com/Peetee06.png" width="60" style="border-radius:50%" alt="Peetee06"/></a>
 <a href="https://github.com/pedrohsampaioo"><img src="https://github.com/pedrohsampaioo.png" width="60" style="border-radius:50%" alt="pedrohsampaioo"/></a>
 <a href="https://github.com/krolmic"><img src="https://github.com/krolmic.png" width="60" style="border-radius:50%" alt="krolmic"/></a>
