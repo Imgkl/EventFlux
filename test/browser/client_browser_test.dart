@@ -97,7 +97,7 @@ void main() {
     );
   }
 
-  test('throws Assertion error if webConfig is not provided', () {
+  test('throws ArgumentError if webConfig is not provided', () {
     expect(
       () => fakeAsync((async) {
         eventFlux.connect(
@@ -107,7 +107,7 @@ void main() {
           onError: (_) {},
         );
       }),
-      throwsA(isA<AssertionError>()),
+      throwsA(isA<ArgumentError>()),
     );
   });
 }
