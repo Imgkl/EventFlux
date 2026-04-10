@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Represents the data structure for an EventFlux event.
 ///
 /// `EventFluxData` is used to store and represent the data associated with
@@ -36,13 +38,52 @@ class EventFluxData {
   String event = '';
 
   /// Event Data
-  String data = '';
+  String _data = '';
+  String get data => _data;
+  set data(String value) {
+    _data = value;
+    _jsonCached = false;
+    _cachedJson = null;
+  }
 
   /// Constructs an instance of `EventFluxData` with given id, event, and data.
-  EventFluxData({required this.data, required this.id, required this.event});
+  EventFluxData({required String data, required this.id, required this.event})
+      : _data = data;
   EventFluxData.fromData(String data) {
-    id = data.split("\n")[0].split('id:')[1];
-    event = data.split("\n")[1].split('event:')[1];
-    this.data = data.split("\n")[2].split('data:')[1];
+    final lines = data.split("\n");
+    if (lines.length < 3) {
+      throw FormatException(
+        'EventFluxData.fromData expects at least 3 lines (id:, event:, data:), '
+        'got ${lines.length}',
+        data,
+      );
+    }
+    final idIdx = lines[0].indexOf('id:');
+    final eventIdx = lines[1].indexOf('event:');
+    final dataIdx = lines[2].indexOf('data:');
+    if (idIdx == -1 || eventIdx == -1 || dataIdx == -1) {
+      throw FormatException(
+        'EventFluxData.fromData expects lines prefixed with "id:", "event:", "data:"',
+        data,
+      );
+    }
+    id = lines[0].substring(idIdx + 3);
+    event = lines[1].substring(eventIdx + 6);
+    _data = lines[2].substring(dataIdx + 5);
+  }
+
+  dynamic _cachedJson;
+  bool _jsonCached = false;
+
+  /// Parses the [data] field as JSON and returns the decoded result.
+  ///
+  /// The result is cached; subsequent accesses return the same object
+  /// without re-parsing. The cache is invalidated when [data] is set.
+  dynamic get json {
+    if (!_jsonCached) {
+      _cachedJson = jsonDecode(data);
+      _jsonCached = true;
+    }
+    return _cachedJson;
   }
 }

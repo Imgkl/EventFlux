@@ -1,6 +1,46 @@
 
 # Changelog 📝
 
+### v3.0.2-dev 🚀
+#### Breaking
+- `onReconnect` callback signature changed from `()` to `(int attempt, Duration delay)`
+- Default request headers now include `Cache-Control: no-store`
+- Minimum Dart SDK raised to `>=3.4.0`, Flutter `>=3.0.0`
+- `webConfig` is now required when running on web
+
+#### Added
+- WHATWG SSE spec-compliant parser (`SseParser`) with persistent `lastEventId`, `retry:` field support, trailing newline stripping, and NULL character check
+- U+2028 line separator sanitization in SSE data lines
+    - Thanks to [Felippe](https://github.com/FelippeNO) for the [PR](https://github.com/Imgkl/EventFlux/pull/39)
+- Request/response/error interceptor chain via `EventFluxInterceptor`
+- Mid-flight abort support via `abortTrigger` parameter
+- Idle timeout detection via `connectionTimeout` on `ReconnectConfig`
+- `maxBackoff` duration cap for exponential backoff
+- `EventFluxStatus.reconnecting` status value
+- `originalError` and `stackTrace` fields on `EventFluxException`
+    - Thanks to [Michał Król](https://github.com/krolmic) for the [PR](https://github.com/Imgkl/EventFlux/pull/45)
+- Event filtering via `EventFluxResponse.where(eventType)`
+- Smart error classification — only 5xx, 408, and 429 trigger auto-reconnect
+
+#### Fixed
+- Race conditions and safety issues resolved in code audit
+- Web support bugs in reconnection call sites (`webConfig` now passed correctly)
+- Exponential reconnect interval calculation
+    - Thanks to [Peter Trost](https://github.com/Peetee06) for the [PR](https://github.com/Imgkl/EventFlux/pull/33)
+
+### v2.3.0-dev.1 🛠️
+This release adds web support 🚀
+- Added `webConfig` parameter to the `connect` method.
+    - This allows you to configure the web client.
+    - Refer README for more info.
+
+
+### v2.2.2-dev.2 🛠️
+- Potential fix for multiple connection issue when using single instance method
+    - Solves [#32](https://github.com/Imgkl/EventFlux/issues/32)
+- Added a check to ensure that stream is not closed before sending data
+
+
 ### v2.2.1 🚀
 - Added Multipart/files support
     - Now you can send multipart/files data to the server.
