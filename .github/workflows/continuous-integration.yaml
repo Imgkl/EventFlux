@@ -19,6 +19,7 @@ jobs:
     with:
       flutter_channel: stable
       min_coverage: 70
+      test_optimization: false
 
   test-clients:
     runs-on: ubuntu-latest
