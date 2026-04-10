@@ -107,8 +107,7 @@ void main() {
         // Send multiple SSE events with id, event, and data fields
         controller.add(utf8.encode('id:1\nevent:message\ndata:hello\n\n'));
         controller.add(utf8.encode('id:2\nevent:update\ndata:world\n\n'));
-        controller
-            .add(utf8.encode('id:3\nevent:message\ndata:multi line\n\n'));
+        controller.add(utf8.encode('id:3\nevent:message\ndata:multi line\n\n'));
         async.flushMicrotasks();
 
         expect(events.length, 3);
@@ -302,8 +301,7 @@ void main() {
   });
 
   group('Integration: interceptor integration', () {
-    test(
-        'onRequest adds auth header, onResponse sees status, events delivered',
+    test('onRequest adds auth header, onResponse sees status, events delivered',
         () {
       final controller = StreamController<List<int>>();
       when(mockAdapter.send(any))
@@ -352,8 +350,8 @@ void main() {
         expect(events.length, 1);
         expect(events[0].data, 'intercepted event');
 
-        expect(interceptor.calls,
-            containsAllInOrder(['onRequest', 'onResponse']));
+        expect(
+            interceptor.calls, containsAllInOrder(['onRequest', 'onResponse']));
       });
     });
 

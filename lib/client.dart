@@ -55,7 +55,10 @@ class EventFlux extends EventFluxBase {
   void connect(
     EventFluxConnectionType type,
     String url, {
-    Map<String, String> header = const {'Accept': 'text/event-stream', 'Cache-Control': 'no-store'},
+    Map<String, String> header = const {
+      'Accept': 'text/event-stream',
+      'Cache-Control': 'no-store'
+    },
     Function()? onConnectionClose,
     bool autoReconnect = false,
     ReconnectConfig? reconnectConfig,
@@ -71,7 +74,6 @@ class EventFlux extends EventFluxBase {
     List<EventFluxInterceptor>? interceptors,
     Future<void>? abortTrigger,
   }) {
-
     if (kIsWeb && webConfig == null) {
       throw ArgumentError('WebConfig must be provided on web');
     }
@@ -135,8 +137,9 @@ class EventFlux extends EventFluxBase {
 
     /// Create a new HTTP client based on the platform if no adapter is present.
     if (config.httpClient == null) {
-      client =
-          kIsWeb ? FetchClientExtension.fromWebConfig(config.webConfig!) : Client();
+      client = kIsWeb
+          ? FetchClientExtension.fromWebConfig(config.webConfig!)
+          : Client();
     }
 
     _isExplicitDisconnect = false;
@@ -162,8 +165,8 @@ class EventFlux extends EventFluxBase {
     // Run onRequest interceptor chain
     if (config.interceptors != null) {
       try {
-        request = await InterceptorRunner.runOnRequest(
-            request, config.interceptors);
+        request =
+            await InterceptorRunner.runOnRequest(request, config.interceptors);
       } on EventFluxException catch (e) {
         await InterceptorRunner.runOnError(
             e, config.interceptors, config.onError);
@@ -182,178 +185,177 @@ class EventFlux extends EventFluxBase {
     }
 
     response.then((data) async {
-        eventFluxLog(
-          'Connected',
-          LogEvent.info,
-          _tag,
-        );
+      eventFluxLog(
+        'Connected',
+        LogEvent.info,
+        _tag,
+      );
 
-        eventFluxLog(
-          "Status code: ${data.statusCode.toString()}",
-          LogEvent.info,
-          _tag,
-        );
+      eventFluxLog(
+        "Status code: ${data.statusCode.toString()}",
+        LogEvent.info,
+        _tag,
+      );
 
-        // Run onResponse interceptor chain
-        if (config.interceptors != null) {
-          data = await InterceptorRunner.runOnResponse(
-              data, config.interceptors);
+      // Run onResponse interceptor chain
+      if (config.interceptors != null) {
+        data = await InterceptorRunner.runOnResponse(data, config.interceptors);
+      }
+
+      if (data.statusCode != 200) {
+        _status = EventFluxStatus.error;
+        String responseBody = await data.stream.bytesToString();
+        Map<String, dynamic>? errorDetails;
+        try {
+          errorDetails = jsonDecode(responseBody);
+        } catch (e) {
+          errorDetails = {'rawBody': responseBody};
         }
 
-        if (data.statusCode != 200) {
-          _status = EventFluxStatus.error;
-          String responseBody = await data.stream.bytesToString();
-          Map<String, dynamic>? errorDetails;
-          try {
-            errorDetails = jsonDecode(responseBody);
-          } catch (e) {
-            errorDetails = {'rawBody': responseBody};
-          }
-
-          await InterceptorRunner.runOnError(
-            EventFluxException(
-              statusCode: data.statusCode,
-              reasonPhrase: data.reasonPhrase,
-              message: errorDetails.toString().isEmpty
-                  ? data.reasonPhrase
-                  : errorDetails.toString(),
-            ),
-            config.interceptors,
-            config.onError,
-          );
-
-          // Error classification: only reconnect on 5xx, 408, 429
-          final shouldRetry = data.statusCode >= 500 ||
-              data.statusCode == 408 ||
-              data.statusCode == 429;
-          if (shouldRetry) {
-            _scheduleReconnect(config);
-          }
-          return;
-        }
-
-        // Content-Type validation: must contain text/event-stream
-        final contentType = data.headers['content-type'] ?? '';
-        if (!contentType.contains('text/event-stream')) {
-          await InterceptorRunner.runOnError(
-            EventFluxException(
-              statusCode: data.statusCode,
-              message:
-                  'Invalid content-type: expected text/event-stream, got $contentType',
-            ),
-            config.interceptors,
-            config.onError,
-          );
-          await _stop();
-          return;
-        }
-
-        // Guarded zone for .listen() — defense-in-depth for orphaned stream
-        // errors that arrive after subscription cancellation on non-web platforms.
-        final guardedZone = Zone.current.fork(
-          specification: ZoneSpecification(
-            handleUncaughtError: (self, parent, zone, error, stackTrace) {
-              if (_isExplicitDisconnect) return;
-              eventFluxLog(
-                  'Unhandled stream error: $error', LogEvent.error, _tag);
-            },
-          ),
-        );
-
-        // Applying transforms and listening to it
-        _streamSubscription = guardedZone.run(() => data.stream
-            .transform(const Utf8Decoder())
-            .transform(const LineSplitter())
-            .listen(
-              (dataLine) {
-                // Reset idle timer on every data line (comments count as heartbeats)
-                _resetIdleTimer(config);
-
-                final event = _sseParser.processLine(
-                  dataLine,
-                  tag: _tag,
-                  logReceivedData: config.logReceivedData,
-                  onError: config.onError,
-                );
-
-                // Forward server retry interval to reconnect strategy
-                final serverRetry = _sseParser.serverRetryInterval;
-                if (serverRetry != null) {
-                  _reconnectStrategy.updateRetryInterval(serverRetry);
-                }
-
-                if (event != null &&
-                    _streamController != null &&
-                    !_streamController!.isClosed) {
-                  _streamController!.add(event);
-                }
-              },
-              cancelOnError: true,
-              onDone: () async {
-                eventFluxLog('Stream Closed', LogEvent.info, _tag);
-                await _stop();
-
-                // When the stream is closed, onClose can be called to execute a function.
-                if (_onConnectionClose != null) {
-                  _onConnectionClose!();
-                  _onConnectionClose = null;
-                }
-
-                _scheduleReconnect(config);
-              },
-              onError: (error, s) async {
-                // Suppress errors caused by explicit disconnect (e.g., FetchClient
-                // abort on web emits a ClientException when the client is closed).
-                if (_isExplicitDisconnect) return;
-
-                eventFluxLog(
-                  'Data Stream Listen Error: ${data.statusCode}: $error ',
-                  LogEvent.error,
-                  _tag,
-                );
-
-                await InterceptorRunner.runOnError(
-                  EventFluxException(
-                    message: error.toString(),
-                    statusCode: data.statusCode,
-                    reasonPhrase: data.reasonPhrase,
-                    originalError: error,
-                    stackTrace: s,
-                  ),
-                  config.interceptors,
-                  config.onError,
-                );
-
-                _scheduleReconnect(config);
-              },
-            ));
-
-        if (data.statusCode == 200) {
-          _status = EventFluxStatus.connected;
-          _reconnectStrategy.resetOnSuccess();
-          _resetIdleTimer(config);
-          config.onSuccessCallback(
-            EventFluxResponse(
-              status: EventFluxStatus.connected,
-              stream: _streamController!.stream,
-            ),
-          );
-        }
-      }).catchError((e) async {
-        eventFluxLog('Connection error: $e', LogEvent.error, _tag);
         await InterceptorRunner.runOnError(
           EventFluxException(
-            message: e.toString(),
-            originalError: e,
-            stackTrace: e is Error ? e.stackTrace : null,
+            statusCode: data.statusCode,
+            reasonPhrase: data.reasonPhrase,
+            message: errorDetails.toString().isEmpty
+                ? data.reasonPhrase
+                : errorDetails.toString(),
           ),
           config.interceptors,
           config.onError,
         );
-        _streamController?.close();
+
+        // Error classification: only reconnect on 5xx, 408, 429
+        final shouldRetry = data.statusCode >= 500 ||
+            data.statusCode == 408 ||
+            data.statusCode == 429;
+        if (shouldRetry) {
+          _scheduleReconnect(config);
+        }
+        return;
+      }
+
+      // Content-Type validation: must contain text/event-stream
+      final contentType = data.headers['content-type'] ?? '';
+      if (!contentType.contains('text/event-stream')) {
+        await InterceptorRunner.runOnError(
+          EventFluxException(
+            statusCode: data.statusCode,
+            message:
+                'Invalid content-type: expected text/event-stream, got $contentType',
+          ),
+          config.interceptors,
+          config.onError,
+        );
         await _stop();
-        _scheduleReconnect(config);
-      });
+        return;
+      }
+
+      // Guarded zone for .listen() — defense-in-depth for orphaned stream
+      // errors that arrive after subscription cancellation on non-web platforms.
+      final guardedZone = Zone.current.fork(
+        specification: ZoneSpecification(
+          handleUncaughtError: (self, parent, zone, error, stackTrace) {
+            if (_isExplicitDisconnect) return;
+            eventFluxLog(
+                'Unhandled stream error: $error', LogEvent.error, _tag);
+          },
+        ),
+      );
+
+      // Applying transforms and listening to it
+      _streamSubscription = guardedZone.run(() => data.stream
+          .transform(const Utf8Decoder())
+          .transform(const LineSplitter())
+          .listen(
+            (dataLine) {
+              // Reset idle timer on every data line (comments count as heartbeats)
+              _resetIdleTimer(config);
+
+              final event = _sseParser.processLine(
+                dataLine,
+                tag: _tag,
+                logReceivedData: config.logReceivedData,
+                onError: config.onError,
+              );
+
+              // Forward server retry interval to reconnect strategy
+              final serverRetry = _sseParser.serverRetryInterval;
+              if (serverRetry != null) {
+                _reconnectStrategy.updateRetryInterval(serverRetry);
+              }
+
+              if (event != null &&
+                  _streamController != null &&
+                  !_streamController!.isClosed) {
+                _streamController!.add(event);
+              }
+            },
+            cancelOnError: true,
+            onDone: () async {
+              eventFluxLog('Stream Closed', LogEvent.info, _tag);
+              await _stop();
+
+              // When the stream is closed, onClose can be called to execute a function.
+              if (_onConnectionClose != null) {
+                _onConnectionClose!();
+                _onConnectionClose = null;
+              }
+
+              _scheduleReconnect(config);
+            },
+            onError: (error, s) async {
+              // Suppress errors caused by explicit disconnect (e.g., FetchClient
+              // abort on web emits a ClientException when the client is closed).
+              if (_isExplicitDisconnect) return;
+
+              eventFluxLog(
+                'Data Stream Listen Error: ${data.statusCode}: $error ',
+                LogEvent.error,
+                _tag,
+              );
+
+              await InterceptorRunner.runOnError(
+                EventFluxException(
+                  message: error.toString(),
+                  statusCode: data.statusCode,
+                  reasonPhrase: data.reasonPhrase,
+                  originalError: error,
+                  stackTrace: s,
+                ),
+                config.interceptors,
+                config.onError,
+              );
+
+              _scheduleReconnect(config);
+            },
+          ));
+
+      if (data.statusCode == 200) {
+        _status = EventFluxStatus.connected;
+        _reconnectStrategy.resetOnSuccess();
+        _resetIdleTimer(config);
+        config.onSuccessCallback(
+          EventFluxResponse(
+            status: EventFluxStatus.connected,
+            stream: _streamController!.stream,
+          ),
+        );
+      }
+    }).catchError((e) async {
+      eventFluxLog('Connection error: $e', LogEvent.error, _tag);
+      await InterceptorRunner.runOnError(
+        EventFluxException(
+          message: e.toString(),
+          originalError: e,
+          stackTrace: e is Error ? e.stackTrace : null,
+        ),
+        config.interceptors,
+        config.onError,
+      );
+      _streamController?.close();
+      await _stop();
+      _scheduleReconnect(config);
+    });
   }
 
   @override

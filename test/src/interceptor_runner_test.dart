@@ -55,7 +55,8 @@ void main() {
         ];
 
         final request = Request('GET', Uri.parse('http://example.com'));
-        final result = await InterceptorRunner.runOnRequest(request, interceptors);
+        final result =
+            await InterceptorRunner.runOnRequest(request, interceptors);
 
         expect(order, [1, 2]);
         expect(result.headers['X-First'], 'true');

@@ -81,8 +81,7 @@ class SseParser {
           break;
         case 'retry':
           if (_retryRegex.hasMatch(value)) {
-            _serverRetryInterval =
-                Duration(milliseconds: int.parse(value));
+            _serverRetryInterval = Duration(milliseconds: int.parse(value));
           }
           break;
       }

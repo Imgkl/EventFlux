@@ -71,8 +71,7 @@ void main() {
       final controller = StreamController<List<int>>();
       final response = StreamedResponse(controller.stream, 200,
           headers: {'content-type': 'text/event-stream'});
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       final interceptor = TestInterceptor(
         onRequestFn: (request) async {
@@ -102,8 +101,7 @@ void main() {
       final controller = StreamController<List<int>>();
       final response = StreamedResponse(controller.stream, 200,
           headers: {'content-type': 'text/event-stream'});
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       final order = <String>[];
       final interceptor1 = TestInterceptor(
@@ -137,8 +135,7 @@ void main() {
       final controller = StreamController<List<int>>();
       final response = StreamedResponse(controller.stream, 200,
           headers: {'content-type': 'text/event-stream'});
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       final interceptor = TestInterceptor();
 
@@ -153,14 +150,14 @@ void main() {
         async.flushMicrotasks();
       });
 
-      expect(interceptor.calls, containsAllInOrder(['onRequest', 'onResponse']));
+      expect(
+          interceptor.calls, containsAllInOrder(['onRequest', 'onResponse']));
     });
 
     test('onResponse called on non-200 response before error chain', () {
-      final response = StreamedResponse(Stream.value([]), 401,
-          reasonPhrase: 'Unauthorized');
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      final response =
+          StreamedResponse(Stream.value([]), 401, reasonPhrase: 'Unauthorized');
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       final interceptor = TestInterceptor();
 
@@ -177,14 +174,14 @@ void main() {
       });
 
       // onResponse should be called before onError
-      expect(interceptor.calls, containsAllInOrder(['onRequest', 'onResponse', 'onError']));
+      expect(interceptor.calls,
+          containsAllInOrder(['onRequest', 'onResponse', 'onError']));
     });
 
     test('onError called on non-200 status with correct status code', () {
       final response = StreamedResponse(Stream.value([]), 500,
           reasonPhrase: 'Internal Server Error');
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       EventFluxException? receivedError;
       final interceptor = TestInterceptor(
@@ -232,10 +229,9 @@ void main() {
     });
 
     test('onError returning null suppresses user onError callback', () {
-      final response = StreamedResponse(Stream.value([]), 403,
-          reasonPhrase: 'Forbidden');
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      final response =
+          StreamedResponse(Stream.value([]), 403, reasonPhrase: 'Forbidden');
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       final interceptor = TestInterceptor(
         onErrorFn: (exception) async => null, // suppress
@@ -260,10 +256,9 @@ void main() {
     });
 
     test('onError returning exception propagates to user onError callback', () {
-      final response = StreamedResponse(Stream.value([]), 403,
-          reasonPhrase: 'Forbidden');
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      final response =
+          StreamedResponse(Stream.value([]), 403, reasonPhrase: 'Forbidden');
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       final interceptor = TestInterceptor(); // default: pass through
 
@@ -285,9 +280,11 @@ void main() {
       });
     });
 
-    test('onRequest throwing EventFluxException short-circuits — request never sent', () {
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(StreamedResponse(Stream.value([]), 200,
+    test(
+        'onRequest throwing EventFluxException short-circuits — request never sent',
+        () {
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(
+          StreamedResponse(Stream.value([]), 200,
               headers: {'content-type': 'text/event-stream'})));
 
       final interceptor = TestInterceptor(
@@ -319,15 +316,16 @@ void main() {
     });
 
     test('onRequest throw runs onError interceptors before user callback', () {
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(StreamedResponse(Stream.value([]), 200,
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(
+          StreamedResponse(Stream.value([]), 200,
               headers: {'content-type': 'text/event-stream'})));
 
       final errorInterceptor = TestInterceptor(
         onRequestFn: (request) async => request, // pass-through
         onErrorFn: (exception) async {
           // Transform the error message
-          return EventFluxException(message: 'transformed: ${exception.message}');
+          return EventFluxException(
+              message: 'transformed: ${exception.message}');
         },
       );
 
@@ -403,8 +401,7 @@ void main() {
       final controller = StreamController<List<int>>();
       final response = StreamedResponse(controller.stream, 200,
           headers: {'content-type': 'text/event-stream'});
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       fakeAsync((async) {
         EventFluxResponse? result;
@@ -427,8 +424,7 @@ void main() {
       final controller = StreamController<List<int>>();
       final response = StreamedResponse(controller.stream, 200,
           headers: {'content-type': 'text/event-stream'});
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       fakeAsync((async) {
         EventFluxResponse? result;
@@ -448,10 +444,9 @@ void main() {
     });
 
     test('error chain stops when an interceptor returns null', () {
-      final response = StreamedResponse(Stream.value([]), 500,
-          reasonPhrase: 'Server Error');
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      final response =
+          StreamedResponse(Stream.value([]), 500, reasonPhrase: 'Server Error');
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       final interceptor1 = TestInterceptor(
         onErrorFn: (exception) async => null, // suppress
@@ -483,8 +478,7 @@ void main() {
         reasonPhrase: 'Too Many Requests',
         headers: {'retry-after': '30'},
       );
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       String? retryAfter;
       final interceptor = TestInterceptor(
@@ -513,8 +507,7 @@ void main() {
       final controller = StreamController<List<int>>();
       final response = StreamedResponse(controller.stream, 200,
           headers: {'content-type': 'text/event-stream'});
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       final authInterceptor = TestInterceptor(
         onRequestFn: (request) async {

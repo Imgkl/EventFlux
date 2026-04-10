@@ -219,9 +219,7 @@ void main() {
       test('accepts content-type with charset parameter', () {
         final controller = StreamController<List<int>>();
         final response = StreamedResponse(controller.stream, 200,
-            headers: {
-              'content-type': 'text/event-stream; charset=utf-8'
-            });
+            headers: {'content-type': 'text/event-stream; charset=utf-8'});
         when(mockHttpClient.send(any))
             .thenAnswer((_) => Future.value(response));
 
@@ -490,10 +488,9 @@ void main() {
 
     group('StreamController leak fix', () {
       test('StreamController closed on interceptor exception', () {
-        when(mockHttpClient.send(any))
-            .thenAnswer((_) => Future.value(
-                StreamedResponse(Stream.value([]), 200,
-                    headers: {'content-type': 'text/event-stream'})));
+        when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(
+            StreamedResponse(Stream.value([]), 200,
+                headers: {'content-type': 'text/event-stream'})));
 
         fakeAsync((async) {
           // Create an interceptor that throws on request
@@ -617,9 +614,8 @@ void main() {
 
       test('abort before send triggers onError via catchError', () {
         final completer = Completer<void>();
-        when(mockHttpClient.send(any))
-            .thenAnswer((_) => Future.error(
-                RequestAbortedException(Uri.parse(testUrl))));
+        when(mockHttpClient.send(any)).thenAnswer(
+            (_) => Future.error(RequestAbortedException(Uri.parse(testUrl))));
 
         fakeAsync((async) {
           bool errorCalled = false;

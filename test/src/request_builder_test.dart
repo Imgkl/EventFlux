@@ -35,7 +35,10 @@ void main() {
       });
 
       test('adds headers to standard request', () {
-        final headers = {'Authorization': 'Bearer token', 'Accept': 'text/event-stream'};
+        final headers = {
+          'Authorization': 'Bearer token',
+          'Accept': 'text/event-stream'
+        };
         final config = ConnectionConfig(
           type: EventFluxConnectionType.get,
           url: 'http://example.com/sse',
@@ -197,8 +200,7 @@ void main() {
 
         final request = RequestBuilder.build(config);
         expect(request, isA<AbortableMultipartRequest>());
-        expect(
-            (request as AbortableMultipartRequest).abortTrigger, trigger);
+        expect((request as AbortableMultipartRequest).abortTrigger, trigger);
       });
 
       test('builds standard MultipartRequest when trigger is null + multipart',

@@ -15,7 +15,8 @@ void main() {
 
       expect(config.type, EventFluxConnectionType.get);
       expect(config.url, 'http://example.com/sse');
-      expect(config.header, {'Accept': 'text/event-stream', 'Cache-Control': 'no-store'});
+      expect(config.header,
+          {'Accept': 'text/event-stream', 'Cache-Control': 'no-store'});
       expect(config.autoReconnect, false);
       expect(config.reconnectConfig, isNull);
       expect(config.onError, isNull);

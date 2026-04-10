@@ -34,7 +34,10 @@ class ConnectionConfig {
     required this.type,
     required this.url,
     required this.onSuccessCallback,
-    this.header = const {'Accept': 'text/event-stream', 'Cache-Control': 'no-store'},
+    this.header = const {
+      'Accept': 'text/event-stream',
+      'Cache-Control': 'no-store'
+    },
     this.autoReconnect = false,
     this.reconnectConfig,
     this.onError,

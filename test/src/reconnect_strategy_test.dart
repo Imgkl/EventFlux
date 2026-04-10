@@ -47,14 +47,16 @@ void main() {
 
       fakeAsync((async) {
         bool result = false;
-        strategy.attemptIfNeeded(
-          autoReconnect: false,
-          isExplicitDisconnect: () => false,
-          tag: null,
-          refreshHeaders: () async {},
-          startConnection: () {},
-          stopConnection: () async {},
-        ).then((v) => result = v);
+        strategy
+            .attemptIfNeeded(
+              autoReconnect: false,
+              isExplicitDisconnect: () => false,
+              tag: null,
+              refreshHeaders: () async {},
+              startConnection: () {},
+              stopConnection: () async {},
+            )
+            .then((v) => result = v);
         async.flushMicrotasks();
         expect(result, false);
       });
@@ -65,14 +67,16 @@ void main() {
 
       fakeAsync((async) {
         bool result = false;
-        strategy.attemptIfNeeded(
-          autoReconnect: true,
-          isExplicitDisconnect: () => true,
-          tag: null,
-          refreshHeaders: () async {},
-          startConnection: () {},
-          stopConnection: () async {},
-        ).then((v) => result = v);
+        strategy
+            .attemptIfNeeded(
+              autoReconnect: true,
+              isExplicitDisconnect: () => true,
+              tag: null,
+              refreshHeaders: () async {},
+              startConnection: () {},
+              stopConnection: () async {},
+            )
+            .then((v) => result = v);
         async.flushMicrotasks();
         expect(result, false);
       });

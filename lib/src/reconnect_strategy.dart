@@ -53,8 +53,7 @@ class ReconnectStrategy {
   Duration _withJitter(Duration base) {
     final jitterFraction = random.nextDouble() * 0.25;
     return base +
-        Duration(
-            milliseconds: (base.inMilliseconds * jitterFraction).round());
+        Duration(milliseconds: (base.inMilliseconds * jitterFraction).round());
   }
 
   /// Schedules a reconnect attempt if conditions are met.

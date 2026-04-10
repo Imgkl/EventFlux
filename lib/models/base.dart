@@ -14,7 +14,10 @@ abstract class EventFluxBase {
     EventFluxConnectionType type,
     String url, {
     required Function(EventFluxResponse?) onSuccessCallback,
-    Map<String, String> header = const {'Accept': 'text/event-stream', 'Cache-Control': 'no-store'},
+    Map<String, String> header = const {
+      'Accept': 'text/event-stream',
+      'Cache-Control': 'no-store'
+    },
     Function()? onConnectionClose,
     bool autoReconnect = false,
     ReconnectConfig? reconnectConfig,

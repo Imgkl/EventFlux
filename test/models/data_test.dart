@@ -5,7 +5,8 @@ void main() {
   group('EventFluxData', () {
     group('fromData', () {
       test('parses valid input correctly', () {
-        final data = EventFluxData.fromData('id:123\nevent:message\ndata:Hello');
+        final data =
+            EventFluxData.fromData('id:123\nevent:message\ndata:Hello');
         expect(data.id, '123');
         expect(data.event, 'message');
         expect(data.data, 'Hello');

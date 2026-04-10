@@ -665,8 +665,7 @@ void main() {
         reasonPhrase: 'Created',
       );
 
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       fakeAsync((async) {
         bool successCalled = false;
@@ -698,8 +697,7 @@ void main() {
         headers: {'content-type': 'text/event-stream'},
       );
 
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       fakeAsync((async) {
         int successCount = 0;
@@ -738,8 +736,7 @@ void main() {
         headers: {'content-type': 'text/event-stream'},
       );
 
-      when(mockHttpClient.send(any))
-          .thenAnswer((_) => Future.value(response));
+      when(mockHttpClient.send(any)).thenAnswer((_) => Future.value(response));
 
       fakeAsync((async) {
         int closeCount = 0;
@@ -766,8 +763,7 @@ void main() {
       });
     });
 
-    test(
-        'exponential backoff interval resets after successful reconnection',
+    test('exponential backoff interval resets after successful reconnection',
         () {
       final controller1 = StreamController<List<int>>();
       final controller2 = StreamController<List<int>>();
