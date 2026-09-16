@@ -8,7 +8,7 @@ enum LogEvent {
 }
 
 /// Returns the emoji corresponding to the given [event].
-_getEmoji(LogEvent event) {
+String _getEmoji(LogEvent event) {
   switch (event) {
     case LogEvent.info:
       return 'ℹ️';
@@ -21,6 +21,5 @@ _getEmoji(LogEvent event) {
 
 /// Logs the given [message] with the corresponding [event] and [tag].
 void eventFluxLog(String message, LogEvent event, String? tag) {
-  log('${_getEmoji(event)} $message',
-      name: tag ?? "EventFlux ${DateTime.now()}");
+  log('${_getEmoji(event)} $message', name: tag ?? 'EventFlux');
 }

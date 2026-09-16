@@ -7,6 +7,7 @@
 enum EventFluxStatus {
   connectionInitiated,
   connected,
+  reconnecting,
   disconnected,
   error,
 }

@@ -1,4 +1,5 @@
 import 'package:eventflux/eventflux.dart';
+import 'package:http/http.dart';
 
 /// Abstract base class for EventFlux connection management.
 ///
@@ -8,60 +9,28 @@ import 'package:eventflux/eventflux.dart';
 ///
 /// Implementing classes are expected to provide concrete implementations for
 /// these methods, adhering to the behavior and specifications outlined here.
-///
-/// Methods:
-///   - `connect`: Establishes a connection to an event stream based on the given
-///     parameters. This method must be implemented by subclasses to initiate
-///     a connection using the specified connection type, URL, headers, and optional
-///     body. It returns an `EventFluxResponse` in `onSuccessCallback` if the connection is establised and when it receives the data.
-///     - Parameters:
-///       - `type`: The `EventFluxConnectionType` (GET or POST) indicating the type
-///         of HTTP connection.
-///       - `url`: The URL of the event stream to connect to.
-///       - `onSuccessCallback`: Required callback function that is called upon a successful
-///       - `header`: Optional HTTP headers for the request. Defaults to accepting
-///         'text/event-stream'.
-///       - `body`: Optional body for POST requests.
-///       - `onConnectionClose`: Optional callback function that is called when the connection is closed.
-///       - `autoReconnect`: Optional flag to enable automatic reconnection. Defaults to false.
-///       - `reconnectConfig`: Optional configuration for reconnection attempts. If `autoReconnect` is true, this parameter is required.
-///      -  `tag`: Optional tag to identify the connection.
-///
-///   - `disconnect`: Disconnects from the current event stream. This method
-///     must be implemented by subclasses to properly close any open connections
-///     and perform necessary cleanup. It returns an `EventFluxStatus` indicating
-///     the result of the disconnection attempt.
-///
-///
-/// Example Implementation:
-/// ```dart
-/// class MyEventFlux extends EventFluxBase {
-///   @override
-///   EventFluxResponse connect(...) {
-///     // implementation
-///   }
-///
-///   @override
-///   EventFluxStatus disconnect() {
-///     // implementation
-///   }
-/// ```
-///
-/// This abstract class is central to ensuring a consistent interface for EventFlux
-/// connection management across different implementations.
 abstract class EventFluxBase {
   void connect(
     EventFluxConnectionType type,
     String url, {
     required Function(EventFluxResponse?) onSuccessCallback,
-    Map<String, String> header = const {'Accept': 'text/event-stream'},
+    Map<String, String> header = const {
+      'Accept': 'text/event-stream',
+      'Cache-Control': 'no-store'
+    },
     Function()? onConnectionClose,
     bool autoReconnect = false,
     ReconnectConfig? reconnectConfig,
     Function(EventFluxException)? onError,
+    HttpClientAdapter? httpClient,
     Map<String, dynamic>? body,
     String? tag,
     bool logReceivedData = false,
+    List<MultipartFile>? files,
+    bool multipartRequest = false,
+    WebConfig? webConfig,
+    List<EventFluxInterceptor>? interceptors,
+    Future<void>? abortTrigger,
   });
   Future<EventFluxStatus> disconnect();
 }

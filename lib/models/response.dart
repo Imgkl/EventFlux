@@ -25,4 +25,10 @@ class EventFluxResponse {
   final EventFluxException? errorMessage;
 
   EventFluxResponse({required this.status, this.stream, this.errorMessage});
+
+  /// Returns a filtered stream that only emits events matching [eventType].
+  Stream<EventFluxData> where(String eventType) {
+    if (stream == null) return const Stream.empty();
+    return stream!.where((event) => event.event == eventType);
+  }
 }
