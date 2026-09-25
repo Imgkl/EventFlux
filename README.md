@@ -6,40 +6,7 @@ A Server-Sent Events client for Dart and Flutter, with WHATWG-compliant parsing,
 
 Building with an AI coding assistant? EventFlux bundles a package skill that teaches your agent how to integrate streams, manage connection lifecycles, and migrate from v2.
 
-[AI setup](#get-started-with-your-ai-assistant) · [Manual setup](#installation) · [Examples](#usage) · [API reference](#api-reference) · [Migrating from v2](#migrating-from-v2)
-
-## Get started with your AI assistant
-
-### 1. Add EventFlux to your app
-
-```bash
-flutter pub add 'eventflux:^3.0.2'
-```
-
-### 2. Install the package skill
-
-From your app's root directory, run:
-
-```bash
-dart run skills@ get -p eventflux
-```
-
-Choose your coding assistant when prompted. For Codex, use `dart run skills@ get --agent codex -p eventflux`.
-
-The bundled [eventflux-usage skill](skills/eventflux-usage/SKILL.md) covers connection ownership, stream subscriptions, reconnects, authentication headers, browser setup, and v2 migration. The skills CLI requires Dart 3.10 or later and installs agent guidance without adding a runtime dependency. See the [Dart package skills guide](https://dart.dev/ai/package-skills) for setup details.
-
-### 3. Ask your assistant to build the integration
-
-Replace `<SSE_URL>` with your endpoint, then use a prompt like:
-
-```text
-Use the eventflux-usage skill to connect this app to <SSE_URL>.
-Follow the app's existing state management. Handle incoming events,
-errors, and reconnects, and clean up the connection and subscription
-when their owner is disposed. Include WebConfig if the app targets web.
-```
-
-For an existing v2 integration, ask: “Use eventflux-usage to migrate this app to EventFlux v3 and check its connection lifecycle.”
+[Installation](#installation) · [Examples](#usage) · [API reference](#api-reference) · [Migrating from v2](#migrating-from-v2)
 
 ## Features 🌟
 
@@ -57,14 +24,54 @@ For an existing v2 integration, ask: “Use eventflux-usage to migrate this app 
 
 ## Installation
 
+Requires Dart SDK `>=3.4.0` and Flutter `>=3.0.0`.
+
+### Agents
+
+<details>
+<summary>Install with your AI assistant</summary>
+
+#### 1. Add EventFlux to your app
+
+```bash
+flutter pub add 'eventflux:^3.0.2'
+```
+
+#### 2. Install the package skill
+
+From your app's root directory, run:
+
+```bash
+dart run skills@ get -p eventflux
+```
+
+Choose your coding assistant when prompted. For Codex, use `dart run skills@ get --agent codex -p eventflux`.
+
+The bundled [eventflux-usage skill](skills/eventflux-usage/SKILL.md) covers connection ownership, stream subscriptions, reconnects, authentication headers, browser setup, and v2 migration. The skills CLI requires Dart 3.10 or later and installs agent guidance without adding a runtime dependency. See the [Dart package skills guide](https://dart.dev/ai/package-skills) for setup details.
+
+#### 3. Ask your assistant to build the integration
+
+Replace `<SSE_URL>` with your endpoint, then use a prompt like:
+
+```text
+Use the eventflux-usage skill to connect this app to <SSE_URL>.
+Follow the app's existing state management. Handle incoming events,
+errors, and reconnects, and clean up the connection and subscription
+when their owner is disposed. Include WebConfig if the app targets web.
+```
+
+For an existing v2 integration, ask: “Use eventflux-usage to migrate this app to EventFlux v3 and check its connection lifecycle.”
+
+</details>
+
+### Manual
+
 To set up manually, add EventFlux to your `pubspec.yaml`, then run `flutter pub get`:
 
 ```yaml
 dependencies:
   eventflux: ^3.0.2
 ```
-
-Requires Dart SDK `>=3.4.0` and Flutter `>=3.0.0`.
 
 ## Usage
 
