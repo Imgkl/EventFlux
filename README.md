@@ -55,14 +55,6 @@ For an existing v2 integration, ask: “Use eventflux-usage to migrate this app 
 - 🔌 **Pluggable HTTP clients** via `HttpClientAdapter`
 - 🧠 **HTTP error classification** — retries 5xx, 408, and 429 responses; other HTTP errors are not retried
 
-## Platform Support
-
-| Android | iOS | Web | MacOS | Windows | Linux |
-|---------|-----|-----|-------|---------|-------|
-| ✅ | ✅ | ✅ | ✅ | ❓ | ❓ |
-
-Windows and Linux should work but haven't been battle-tested yet — PRs welcome if you get there first.
-
 ## Installation
 
 To set up manually, add EventFlux to your `pubspec.yaml`, then run `flutter pub get`:
