@@ -1,7 +1,9 @@
 
 # Changelog 📝
 
-### v3.0.2-dev 🚀
+### v3.0.2 🚀
+First stable v3 release.
+
 #### Breaking
 - `onReconnect` callback signature changed from `()` to `(int attempt, Duration delay)`
 - Default request headers now include `Cache-Control: no-store`
@@ -23,6 +25,7 @@
 - Smart error classification — only 5xx, 408, and 429 trigger auto-reconnect
 
 #### Fixed
+- Prevent `Bad state: Cannot add event after closing` during disconnect by guarding event delivery and clearing the controller reference before closing it ([#47](https://github.com/Imgkl/EventFlux/issues/47)).
 - Race conditions and safety issues resolved in code audit
 - Web support bugs in reconnection call sites (`webConfig` now passed correctly)
 - Exponential reconnect interval calculation
