@@ -1,14 +1,18 @@
 
 # Changelog 📝
 
-### v3.0.2-dev 🚀
+### v3.0.2 🚀
+First stable v3 release.
+
 #### Breaking
 - `onReconnect` callback signature changed from `()` to `(int attempt, Duration delay)`
-- Default request headers now include `Cache-Control: no-store`
+- Default request headers now include `Cache-Control: no-store` on native platforms; browsers use `WebConfig.cache` instead
 - Minimum Dart SDK raised to `>=3.4.0`, Flutter `>=3.0.0`
 - `webConfig` is now required when running on web
 
 #### Added
+- Web platform support via `WebConfig` and `fetch_client`
+    - Thanks to [Peter Trost](https://github.com/peter-trost) for the [PR](https://github.com/Imgkl/EventFlux/pull/35)
 - WHATWG SSE spec-compliant parser (`SseParser`) with persistent `lastEventId`, `retry:` field support, trailing newline stripping, and NULL character check
 - U+2028 line separator sanitization in SSE data lines
     - Thanks to [Felippe](https://github.com/FelippeNO) for the [PR](https://github.com/Imgkl/EventFlux/pull/39)
@@ -20,13 +24,14 @@
 - `originalError` and `stackTrace` fields on `EventFluxException`
     - Thanks to [Michał Król](https://github.com/krolmic) for the [PR](https://github.com/Imgkl/EventFlux/pull/45)
 - Event filtering via `EventFluxResponse.where(eventType)`
-- Smart error classification — only 5xx, 408, and 429 trigger auto-reconnect
+- HTTP error classification — retries 5xx, 408, and 429 responses; other HTTP errors are not retried
 
 #### Fixed
+- Prevent `Bad state: Cannot add event after closing` during disconnect by guarding event delivery and clearing the controller reference before closing it ([#47](https://github.com/Imgkl/EventFlux/issues/47)).
 - Race conditions and safety issues resolved in code audit
 - Web support bugs in reconnection call sites (`webConfig` now passed correctly)
 - Exponential reconnect interval calculation
-    - Thanks to [Peter Trost](https://github.com/Peetee06) for the [PR](https://github.com/Imgkl/EventFlux/pull/33)
+    - Thanks to [Peter Trost](https://github.com/peter-trost) for the [PR](https://github.com/Imgkl/EventFlux/pull/33)
 
 ### v2.3.0-dev.1 🛠️
 This release adds web support 🚀
