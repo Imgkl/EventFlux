@@ -24,7 +24,7 @@ Windows and Linux should work but haven't been battle-tested yet — PRs welcome
 - 📎 **Multipart request** support
 - 🏗️ **Singleton** (`EventFlux.instance`) and **multiple independent connections** (`EventFlux.spawn()`)
 - 🔌 **Pluggable HTTP clients** via `HttpClientAdapter`
-- 🧠 **Smart error classification** — only 5xx, 408, and 429 trigger auto-reconnect
+- 🧠 **HTTP error classification** — retries 5xx, 408, and 429 responses; other HTTP errors are not retried
 
 ## Migrating from v2? FYI. 🔄
 <details>
@@ -34,7 +34,7 @@ If you're upgrading from v2, here's what changed:
 
 #### Breaking
 - `onReconnect` callback signature changed from `()` to `(int attempt, Duration delay)`
-- Default request headers now include `Cache-Control: no-store`
+- Default request headers now include `Cache-Control: no-store` on native platforms; browsers use `WebConfig.cache` instead
 - Minimum Dart SDK raised to `>=3.4.0`, Flutter `>=3.0.0`
 - `webConfig` is now required when running on web
 
@@ -59,6 +59,8 @@ dependencies:
 Requires Dart SDK `>=3.4.0` and Flutter `>=3.0.0`.
 
 ## Usage 🔧
+
+On web, every `connect()` call requires `webConfig: WebConfig()` (or a custom configuration). See the **Web Platform** example below.
 
 <details>
 <summary><b>Basic Connection</b> — Connect to an SSE endpoint in a few lines</summary>
@@ -90,6 +92,8 @@ void main() {
 
 <details>
 <summary><b>Auto-Reconnect</b> — Exponential backoff with jitter and token refresh</summary>
+
+Replace `refreshAccessToken()` with your app's token-refresh function. Auto-reconnect handles connection errors, stream closure, and idle timeouts; among HTTP error responses, only 5xx, 408, and 429 are retried.
 
 ```dart
 import 'package:eventflux/eventflux.dart';
@@ -307,7 +311,7 @@ Connects to a server-sent event stream.
 | `type` | `EventFluxConnectionType` | HTTP method (`get` or `post`) | — |
 | `url` | `String` | SSE stream URL | — |
 | `onSuccessCallback` | `Function(EventFluxResponse?)` | Callback on successful connection (required) | — |
-| `header` | `Map<String, String>` | HTTP headers | `{'Accept': 'text/event-stream', 'Cache-Control': 'no-store'}` |
+| `header` | `Map<String, String>` | HTTP headers; `Cache-Control` is removed on web in favor of `WebConfig.cache` | `{'Accept': 'text/event-stream', 'Cache-Control': 'no-store'}` |
 | `onConnectionClose` | `Function()?` | Called when the connection closes | — |
 | `autoReconnect` | `bool` | Auto-reconnect on disconnection | `false` |
 | `reconnectConfig` | `ReconnectConfig?` | Reconnection settings (required if `autoReconnect` is true) | — |
@@ -376,7 +380,7 @@ Returns a new independent `EventFlux` instance for managing parallel SSE connect
 
 EventFlux wouldn't exist without these people who believed it could be better.
 
-<a href="https://github.com/Peetee06"><img src="https://github.com/Peetee06.png" width="60" style="border-radius:50%" alt="Peetee06"/></a>
+<a href="https://github.com/peter-trost"><img src="https://github.com/peter-trost.png" width="60" style="border-radius:50%" alt="peter-trost"/></a>
 <a href="https://github.com/pedrohsampaioo"><img src="https://github.com/pedrohsampaioo.png" width="60" style="border-radius:50%" alt="pedrohsampaioo"/></a>
 <a href="https://github.com/krolmic"><img src="https://github.com/krolmic.png" width="60" style="border-radius:50%" alt="krolmic"/></a>
 <a href="https://github.com/FelippeNO"><img src="https://github.com/FelippeNO.png" width="60" style="border-radius:50%" alt="FelippeNO"/></a>
