@@ -11,6 +11,7 @@ First stable v3 release.
 - `webConfig` is now required when running on web
 
 #### Added
+- Bundled `eventflux-usage` agent skill for app integration, connection lifecycle, and v2 migration guidance
 - Web platform support via `WebConfig` and `fetch_client`
     - Thanks to [Peter Trost](https://github.com/peter-trost) for the [PR](https://github.com/Imgkl/EventFlux/pull/35)
 - WHATWG SSE spec-compliant parser (`SseParser`) with persistent `lastEventId`, `retry:` field support, trailing newline stripping, and NULL character check
