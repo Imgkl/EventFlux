@@ -21,6 +21,22 @@ Consumers import `package:eventflux/eventflux.dart`. `EventFlux.instance` provid
 
 ## Connection and event flow
 
+```mermaid
+flowchart TD
+    A["connect() / ConnectionConfig"] --> B["RequestBuilder"]
+    B --> C["Request interceptors"]
+    C --> D["HTTP transport"]
+    D --> E["Response interceptors"]
+    E --> F["Validate HTTP 200 + SSE content type"]
+    F -->|Valid stream| G["UTF-8 / lines / SseParser"]
+    G --> H["EventFluxResponse / consumer stream"]
+
+    D -.->|Connection failure| R["ReconnectStrategy"]
+    F -.->|HTTP 5xx, 408, or 429| R
+    G -.->|Stream closure, error, or idle timeout| R
+    R -->|When enabled: backoff, refreshed headers, Last-Event-ID| B
+```
+
 1. `connect()` checks the platform and connection state, builds a `ConnectionConfig`, and starts the connection. Calls during an active or pending connection are ignored.
 2. `RequestBuilder` creates the request. Request interceptors run before it is sent through the supplied `HttpClientAdapter` or the default client.
 3. Response interceptors run before validation. A successful SSE connection requires HTTP 200 and a content type containing `text/event-stream`.
