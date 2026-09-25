@@ -8,6 +8,20 @@ Building with an AI coding assistant? EventFlux bundles a package skill that tea
 
 [AI setup](#get-started-with-your-ai-assistant) · [Manual setup](#installation) · [Examples](#usage) · [API reference](#api-reference) · [Migrating from v2](#migrating-from-v2)
 
+## Features 🌟
+
+- 📜 **WHATWG SSE spec-compliant** event stream parsing with persistent `lastEventId` and `retry:` field support
+- 🔄 **Auto-reconnect** with linear or exponential backoff, random jitter, and configurable `maxBackoff` cap
+- 🔗 **Interceptor chain** — hook into request, response, and error lifecycle stages
+- 🛑 **Mid-flight abort** via a `Future<void>` trigger
+- ⏱️ **Idle timeout detection** — drops the connection if no data arrives within a configured duration
+- 🌐 **Web platform support** with CORS, credentials, and caching configuration via `WebConfig`
+- 🔍 **Event filtering** by type using `response.where()`
+- 📎 **Multipart request** support
+- 🏗️ **Singleton** (`EventFlux.instance`) and **multiple independent connections** (`EventFlux.spawn()`)
+- 🔌 **Pluggable HTTP clients** via `HttpClientAdapter`
+- 🧠 **HTTP error classification** — retries 5xx, 408, and 429 responses; other HTTP errors are not retried
+
 ## Get started with your AI assistant
 
 <details>
@@ -45,20 +59,6 @@ when their owner is disposed. Include WebConfig if the app targets web.
 For an existing v2 integration, ask: “Use eventflux-usage to migrate this app to EventFlux v3 and check its connection lifecycle.”
 
 </details>
-
-## Features 🌟
-
-- 📜 **WHATWG SSE spec-compliant** event stream parsing with persistent `lastEventId` and `retry:` field support
-- 🔄 **Auto-reconnect** with linear or exponential backoff, random jitter, and configurable `maxBackoff` cap
-- 🔗 **Interceptor chain** — hook into request, response, and error lifecycle stages
-- 🛑 **Mid-flight abort** via a `Future<void>` trigger
-- ⏱️ **Idle timeout detection** — drops the connection if no data arrives within a configured duration
-- 🌐 **Web platform support** with CORS, credentials, and caching configuration via `WebConfig`
-- 🔍 **Event filtering** by type using `response.where()`
-- 📎 **Multipart request** support
-- 🏗️ **Singleton** (`EventFlux.instance`) and **multiple independent connections** (`EventFlux.spawn()`)
-- 🔌 **Pluggable HTTP clients** via `HttpClientAdapter`
-- 🧠 **HTTP error classification** — retries 5xx, 408, and 429 responses; other HTTP errors are not retried
 
 ## Installation
 
