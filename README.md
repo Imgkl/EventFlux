@@ -10,6 +10,9 @@ Building with an AI coding assistant? EventFlux bundles a package skill that tea
 
 ## Get started with your AI assistant
 
+<details>
+<summary>Setup steps and example prompts</summary>
+
 ### 1. Add EventFlux to your app
 
 ```bash
@@ -40,6 +43,8 @@ when their owner is disposed. Include WebConfig if the app targets web.
 ```
 
 For an existing v2 integration, ask: “Use eventflux-usage to migrate this app to EventFlux v3 and check its connection lifecycle.”
+
+</details>
 
 ## Features 🌟
 
