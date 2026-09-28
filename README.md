@@ -2,15 +2,11 @@
 
 # EventFlux
 
-A Dart package for Server-Sent Events done right — WHATWG spec-compliant parsing, auto-reconnect with exponential backoff, request/response interceptors, mid-flight abort, idle timeout detection, and web platform support out of the box.
+A Server-Sent Events client for Dart and Flutter, with WHATWG-compliant parsing, automatic reconnection, and native and web support.
 
-## Platform Support
+Building with an AI coding assistant? EventFlux bundles a package skill that teaches your agent how to integrate streams, manage connection lifecycles, and migrate from v2.
 
-| Android | iOS | Web | MacOS | Windows | Linux |
-|---------|-----|-----|-------|---------|-------|
-| ✅ | ✅ | ✅ | ✅ | ❓ | ❓ |
-
-Windows and Linux should work but haven't been battle-tested yet — PRs welcome if you get there first.
+[Installation](#installation) · [Examples](#usage) · [API reference](#api-reference) · [Migrating from v2](#migrating-from-v2)
 
 ## Features 🌟
 
@@ -24,41 +20,62 @@ Windows and Linux should work but haven't been battle-tested yet — PRs welcome
 - 📎 **Multipart request** support
 - 🏗️ **Singleton** (`EventFlux.instance`) and **multiple independent connections** (`EventFlux.spawn()`)
 - 🔌 **Pluggable HTTP clients** via `HttpClientAdapter`
-- 🧠 **Smart error classification** — only 5xx, 408, and 429 trigger auto-reconnect
+- 🧠 **HTTP error classification** — retries 5xx, 408, and 429 responses; other HTTP errors are not retried
 
-## Migrating from v2? FYI. 🔄
-<details>
-<summary>Here</summary>
-
-If you're upgrading from v2, here's what changed:
-
-#### Breaking
-- `onReconnect` callback signature changed from `()` to `(int attempt, Duration delay)`
-- Default request headers now include `Cache-Control: no-store`
-- Minimum Dart SDK raised to `>=3.4.0`, Flutter `>=3.0.0`
-- `webConfig` is now required when running on web
-
-#### New in v3
-- `EventFluxStatus.reconnecting` status value
-- `originalError` and `stackTrace` fields on `EventFluxException`
-- Request/response/error interceptor chain via `interceptors` parameter
-- Mid-flight abort support via `abortTrigger` parameter
-- Idle timeout detection via `connectionTimeout` on `ReconnectConfig`
-- `maxBackoff` on `ReconnectConfig` to cap exponential backoff
-- WHATWG-compliant SSE parser with persistent `lastEventId`, `retry:` field support, and U+2028 sanitization
-
-</details>
-
-## Installation 📦
-
-```yaml
-dependencies:
-  eventflux: ^3.0.2-dev
-```
+## Installation
 
 Requires Dart SDK `>=3.4.0` and Flutter `>=3.0.0`.
 
-## Usage 🔧
+### Agents
+
+<details>
+<summary>Install with your AI assistant</summary>
+
+#### 1. Add EventFlux to your app
+
+```bash
+flutter pub add 'eventflux:^3.0.2'
+```
+
+#### 2. Install the package skill
+
+From your app's root directory, run:
+
+```bash
+dart run skills@ get -p eventflux
+```
+
+Choose your coding assistant when prompted. For Codex, use `dart run skills@ get --agent codex -p eventflux`.
+
+The bundled [eventflux-usage skill](skills/eventflux-usage/SKILL.md) covers connection ownership, stream subscriptions, reconnects, authentication headers, browser setup, and v2 migration. The skills CLI requires Dart 3.10 or later and installs agent guidance without adding a runtime dependency. See the [Dart package skills guide](https://dart.dev/ai/package-skills) for setup details.
+
+#### 3. Ask your assistant to build the integration
+
+Replace `<SSE_URL>` with your endpoint, then use a prompt like:
+
+```text
+Use the eventflux-usage skill to connect this app to <SSE_URL>.
+Follow the app's existing state management. Handle incoming events,
+errors, and reconnects, and clean up the connection and subscription
+when their owner is disposed. Include WebConfig if the app targets web.
+```
+
+For an existing v2 integration, ask: “Use eventflux-usage to migrate this app to EventFlux v3 and check its connection lifecycle.”
+
+</details>
+
+### Manual
+
+To set up manually, add EventFlux to your `pubspec.yaml`, then run `flutter pub get`:
+
+```yaml
+dependencies:
+  eventflux: ^3.0.2
+```
+
+## Usage
+
+On web, every `connect()` call requires `webConfig: WebConfig()` (or a custom configuration). See the **Web Platform** example below.
 
 <details>
 <summary><b>Basic Connection</b> — Connect to an SSE endpoint in a few lines</summary>
@@ -90,6 +107,8 @@ void main() {
 
 <details>
 <summary><b>Auto-Reconnect</b> — Exponential backoff with jitter and token refresh</summary>
+
+Replace `refreshAccessToken()` with your app's token-refresh function. Auto-reconnect handles connection errors, stream closure, and idle timeouts; among HTTP error responses, only 5xx, 408, and 429 are retried.
 
 ```dart
 import 'package:eventflux/eventflux.dart';
@@ -295,8 +314,10 @@ response?.where('message').listen((data) {
 });
 ```
 
+## API reference
+
 <details>
-<summary><b>API Reference 📚</b></summary>
+<summary>Connection options, reconnect configuration, and public types</summary>
 
 ### Connect
 
@@ -307,7 +328,7 @@ Connects to a server-sent event stream.
 | `type` | `EventFluxConnectionType` | HTTP method (`get` or `post`) | — |
 | `url` | `String` | SSE stream URL | — |
 | `onSuccessCallback` | `Function(EventFluxResponse?)` | Callback on successful connection (required) | — |
-| `header` | `Map<String, String>` | HTTP headers | `{'Accept': 'text/event-stream', 'Cache-Control': 'no-store'}` |
+| `header` | `Map<String, String>` | HTTP headers; `Cache-Control` is removed on web in favor of `WebConfig.cache` | `{'Accept': 'text/event-stream', 'Cache-Control': 'no-store'}` |
 | `onConnectionClose` | `Function()?` | Called when the connection closes | — |
 | `autoReconnect` | `bool` | Auto-reconnect on disconnection | `false` |
 | `reconnectConfig` | `ReconnectConfig?` | Reconnection settings (required if `autoReconnect` is true) | — |
@@ -372,11 +393,35 @@ Returns a new independent `EventFlux` instance for managing parallel SSE connect
 
 </details>
 
+## Migrating from v2
+
+<details>
+<summary>Breaking changes and additions in v3</summary>
+
+If you're upgrading from v2, here's what changed:
+
+#### Breaking
+- `onReconnect` callback signature changed from `()` to `(int attempt, Duration delay)`
+- Default request headers now include `Cache-Control: no-store` on native platforms; browsers use `WebConfig.cache` instead
+- Minimum Dart SDK raised to `>=3.4.0`, Flutter `>=3.0.0`
+- `webConfig` is now required when running on web
+
+#### New in v3
+- `EventFluxStatus.reconnecting` status value
+- `originalError` and `stackTrace` fields on `EventFluxException`
+- Request/response/error interceptors via `interceptors` parameter
+- Mid-flight abort support via `abortTrigger` parameter
+- Idle timeout detection via `connectionTimeout` on `ReconnectConfig`
+- `maxBackoff` on `ReconnectConfig` to cap exponential backoff
+- WHATWG-compliant SSE parser with persistent `lastEventId`, `retry:` field support, and U+2028 sanitization
+
+</details>
+
 ## Contributors 💜
 
 EventFlux wouldn't exist without these people who believed it could be better.
 
-<a href="https://github.com/Peetee06"><img src="https://github.com/Peetee06.png" width="60" style="border-radius:50%" alt="Peetee06"/></a>
+<a href="https://github.com/peter-trost"><img src="https://github.com/peter-trost.png" width="60" style="border-radius:50%" alt="peter-trost"/></a>
 <a href="https://github.com/pedrohsampaioo"><img src="https://github.com/pedrohsampaioo.png" width="60" style="border-radius:50%" alt="pedrohsampaioo"/></a>
 <a href="https://github.com/krolmic"><img src="https://github.com/krolmic.png" width="60" style="border-radius:50%" alt="krolmic"/></a>
 <a href="https://github.com/FelippeNO"><img src="https://github.com/FelippeNO.png" width="60" style="border-radius:50%" alt="FelippeNO"/></a>
